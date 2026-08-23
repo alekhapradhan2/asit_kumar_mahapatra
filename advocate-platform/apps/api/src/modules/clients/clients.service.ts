@@ -159,21 +159,7 @@ export async function getClientById(id: string) {
           },
         },
       },
-      messages: {
-        orderBy: { createdAt: 'desc' },
-        take: 50,
-        include: {
-          sender: {
-            select: {
-              id: true,
-              email: true,
-              role: true,
-              client: { select: { fullName: true } },
-            },
-          },
-        },
-      },
-      _count: { select: { cases: true, documents: true, messages: true } },
+      _count: { select: { cases: true, documents: true } },
     },
   });
 
