@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/config';
 
 interface CaseDTO {
   id: string;
@@ -52,7 +53,7 @@ export default function ClientDashboard() {
     setUser(JSON.parse(storedUser));
 
     // Fetch cases
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases`, {
+    fetch(`${apiUrl}/cases`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => {

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/config';
 
 const navItems = [
   { href: '/admin/dashboard', icon: '📊', label: 'Dashboard' },
@@ -31,8 +32,8 @@ export default function AdminDashboard() {
     const headers = { Authorization: `Bearer ${token}` };
 
     Promise.allSettled([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients?limit=5`, { headers }),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases?limit=5&sortBy=updatedAt&sortOrder=desc`, { headers }),
+      fetch(`${apiUrl}/clients?limit=5`, { headers }),
+      fetch(`${apiUrl}/cases?limit=5&sortBy=updatedAt&sortOrder=desc`, { headers }),
     ]).then(async ([clientsRes, casesRes]) => {
       if (clientsRes.status === 'fulfilled' && clientsRes.value.ok) {
         const d = await clientsRes.value.json();

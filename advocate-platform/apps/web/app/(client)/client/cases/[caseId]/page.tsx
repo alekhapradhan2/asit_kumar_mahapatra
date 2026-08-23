@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/config';
 
 const updateSourceLabels: Record<string, { label: string; color: string; icon: string }> = {
   OFFICIAL_COURT_DATA: { label: 'Official Court Data', color: '#4ade80', icon: '🏛️' },
@@ -36,10 +37,10 @@ export default function CaseDetailPage() {
     const fetchCase = async () => {
       try {
         const [caseRes, timelineRes, hearingsRes, verdictRes] = await Promise.allSettled([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/${caseId}`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/${caseId}/timeline`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/${caseId}/hearings`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/${caseId}/verdict`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${apiUrl}/cases/${caseId}`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${apiUrl}/cases/${caseId}/timeline`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${apiUrl}/cases/${caseId}/hearings`, { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${apiUrl}/cases/${caseId}/verdict`, { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
         if (caseRes.status === 'fulfilled' && caseRes.value.ok) {

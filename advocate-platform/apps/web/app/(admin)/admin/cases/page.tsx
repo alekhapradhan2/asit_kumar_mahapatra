@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/config';
 
 export default function AdminCasesPage() {
   const [cases, setCases] = useState<any[]>([]);
@@ -11,7 +12,7 @@ export default function AdminCasesPage() {
     const token = sessionStorage.getItem('admin_access_token');
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases?search=${encodeURIComponent(search)}`, {
+      const res = await fetch(`${apiUrl}/cases?search=${encodeURIComponent(search)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

@@ -5,12 +5,17 @@ export const adminLoginSchema = z.object({
   password: z.string().min(1, 'Password required'),
 });
 
-export const clientLoginSchema = z.object({
-  clientId: z
-    .string()
-    .regex(/^CLIENT-[A-Z0-9]{6,}$/, 'Invalid Client ID format (e.g. CLIENT-ABC123)'),
-  password: z.string().min(1, 'Password required'),
-});
+export const clientLoginSchema = z
+  .object({
+    email: z.string().email().optional(),
+    clientId: z.string().optional(),
+    identifier: z.string().optional(),
+    password: z.string().min(1, 'Password required'),
+  })
+  .refine((data) => data.email || data.clientId || data.identifier, {
+    message: 'Either email, clientId, or identifier must be provided',
+    path: ['email'],
+  });
 
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token required'),

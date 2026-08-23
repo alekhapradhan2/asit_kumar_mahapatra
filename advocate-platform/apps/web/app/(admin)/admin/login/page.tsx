@@ -17,7 +17,8 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/admin/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+      const res = await fetch(`${apiUrl}/auth/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -34,6 +35,7 @@ export default function AdminLoginPage() {
       if (data.data?.accessToken) {
         sessionStorage.setItem('admin_access_token', data.data.accessToken);
         sessionStorage.setItem('admin_user', JSON.stringify(data.data.user));
+        document.cookie = `admin_token=${data.data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
       }
 
       router.push('/admin/dashboard');

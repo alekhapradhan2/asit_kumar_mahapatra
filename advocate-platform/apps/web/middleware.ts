@@ -17,7 +17,9 @@ export function middleware(request: NextRequest) {
 
   // ─── Admin routes ─────────────────────────────────────────────────────────────
   if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
-    const token = request.cookies.get('admin_token')?.value ||
+    const token =
+      request.cookies.get('admin_token')?.value ||
+      request.cookies.get('refreshToken')?.value ||
       request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {
@@ -29,7 +31,9 @@ export function middleware(request: NextRequest) {
 
   // ─── Client portal routes ─────────────────────────────────────────────────────
   if (pathname.startsWith('/client') && pathname !== '/client/login') {
-    const token = request.cookies.get('client_token')?.value ||
+    const token =
+      request.cookies.get('client_token')?.value ||
+      request.cookies.get('refreshToken')?.value ||
       request.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!token) {

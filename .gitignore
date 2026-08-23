@@ -3,36 +3,46 @@ node_modules/
 .pnp/
 .pnp.js
 
-# Testing
-coverage/
-
-# Next.js
+# Build outputs
 .next/
 out/
 build/
 dist/
+.turbo/
 
-# Environment Variables
+# Environment files & Secrets
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+*.env
 
-# Debug logs
+# Allow .env.example templates
+!.env.example
+
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# OS & Editor
+# Database & SQLite files
+*.db
+*.db-journal
+*.sqlite
+
+# OS & IDE metadata
 .DS_Store
-*.pem
 Thumbs.db
 .vscode/
 .idea/
 *.swp
 *.swo
+*.pem
 
-# Turbopack
-.turbo/
+# Local Storage & Uploads
+uploads/
+tmp/

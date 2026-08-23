@@ -1,6 +1,6 @@
 // ─── ENUMS ──────────────────────────────────────────────────────────────────
 
-export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT';
+export type Role = 'SUPER_ADMIN' | 'ADMIN' | 'CLIENT' | 'PROSPECT';
 
 export type CaseStatus =
   | 'CONSULTATION'

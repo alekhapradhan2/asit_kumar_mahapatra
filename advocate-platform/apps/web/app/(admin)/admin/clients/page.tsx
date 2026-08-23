@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { apiUrl } from '@/lib/config';
 
 export default function AdminClientsPage() {
   const [clients, setClients] = useState<any[]>([]);
@@ -20,7 +21,7 @@ export default function AdminClientsPage() {
     const token = sessionStorage.getItem('admin_access_token');
     if (!token) return;
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients?search=${encodeURIComponent(search)}`, {
+      const res = await fetch(`${apiUrl}/clients?search=${encodeURIComponent(search)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -41,7 +42,7 @@ export default function AdminClientsPage() {
     if (!token) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients`, {
+      const res = await fetch(`${apiUrl}/clients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -32,9 +32,15 @@ export const adminLogin = asyncHandler(async (req: Request, res: Response) => {
 
 // POST /api/v1/auth/client/login
 export const clientLogin = asyncHandler(async (req: Request, res: Response) => {
-  const { clientId, password } = req.body;
+  const { clientId, email, identifier, password } = req.body;
+  const loginIdentifier = (email || clientId || identifier) as string;
+
+  if (!loginIdentifier) {
+    throw new AppError('Email or Client ID is required', 400);
+  }
+
   const result = await AuthService.clientLogin(
-    clientId,
+    loginIdentifier,
     password,
     req.ip,
     req.headers['user-agent']

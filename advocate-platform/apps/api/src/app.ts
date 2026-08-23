@@ -45,7 +45,12 @@ const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        allowedOrigins.includes(origin) ||
+        (env.NODE_ENV !== 'production' && origin.startsWith('http://localhost:')) ||
+        (env.NODE_ENV !== 'production' && origin.startsWith('http://127.0.0.1:'))
+      ) {
         callback(null, true);
       } else {
         callback(new Error(`CORS: Origin ${origin} not allowed`));

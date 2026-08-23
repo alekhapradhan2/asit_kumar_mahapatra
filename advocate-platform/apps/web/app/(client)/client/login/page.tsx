@@ -6,7 +6,7 @@ import Link from 'next/link';
 
 export default function ClientLoginPage() {
   const router = useRouter();
-  const [clientId, setClientId] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,13 +17,14 @@ export default function ClientLoginPage() {
     setLoading(true);
 
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/client/login`,
+        `${apiUrl}/auth/client/login`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ clientId: clientId.toUpperCase().trim(), password }),
+          body: JSON.stringify({ identifier: identifier.trim(), password }),
         }
       );
 
@@ -37,6 +38,7 @@ export default function ClientLoginPage() {
       if (data.data?.accessToken) {
         sessionStorage.setItem('client_access_token', data.data.accessToken);
         sessionStorage.setItem('client_user', JSON.stringify(data.data.user));
+        document.cookie = `client_token=${data.data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
       }
 
       router.push('/client/dashboard');
@@ -81,22 +83,22 @@ export default function ClientLoginPage() {
               )}
 
               <div>
-                <label htmlFor="clientId" className="form-label">
-                  Client ID *
+                <label htmlFor="identifier" className="form-label">
+                  Email or Client ID *
                 </label>
                 <input
-                  id="clientId"
+                  id="identifier"
                   type="text"
-                  className="form-input font-mono"
-                  placeholder="CLIENT-XXXXXX"
-                  value={clientId}
-                  onChange={(e) => setClientId(e.target.value.toUpperCase())}
+                  className="form-input"
+                  placeholder="client@example.com or CLIENT-XXXXXX"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   required
                   autoComplete="username"
-                  maxLength={20}
+                  maxLength={100}
                 />
                 <p className="mt-1.5 text-xs text-neutral-500 font-medium">
-                  Your Client ID was issued by the Advocate's office upon engagement.
+                  Enter your registered Email or Client ID issued by the Advocate's office.
                 </p>
               </div>
 

@@ -89,13 +89,23 @@ export async function adminLogin(
 // ─── Client Login ─────────────────────────────────────────────────────────────
 
 export async function clientLogin(
-  clientId: string,
+  identifier: string,
   password: string,
   ipAddress?: string,
   userAgent?: string
 ) {
-  const client = await prisma.client.findUnique({
-    where: { clientId },
+  const trimmed = identifier.trim();
+  const isEmail = trimmed.includes('@');
+
+  const client = await prisma.client.findFirst({
+    where: isEmail
+      ? { email: trimmed.toLowerCase() }
+      : {
+          OR: [
+            { clientId: trimmed.toUpperCase() },
+            { email: trimmed.toLowerCase() },
+          ],
+        },
     include: {
       user: {
         select: {
