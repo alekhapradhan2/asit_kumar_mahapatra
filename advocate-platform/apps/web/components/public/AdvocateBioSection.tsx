@@ -9,6 +9,8 @@ export function AdvocateBioSection() {
       <div className="container-xl relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Court & Advocate Portrait Card */}
+
+          
           <div className="lg:col-span-5">
             <div className="p-8 sm:p-10 rounded-2xl bg-white/95 backdrop-blur-md border border-neutral-200 shadow-sm relative overflow-hidden group">
               <div className="w-16 h-16 rounded-xl bg-black text-white flex items-center justify-center mb-6 shadow-xs">
