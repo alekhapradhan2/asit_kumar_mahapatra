@@ -88,4 +88,5 @@ export async function downloadRealPdfFromUI(cnrNumber: string) {
   };
 }
 
-downloadRealPdfFromUI('TNTI160003232018');
+const targetCNR = process.argv[2] || 'JKAN010006382017';
+downloadRealPdfFromUI(targetCNR);
