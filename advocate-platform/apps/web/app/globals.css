@@ -1,0 +1,329 @@
+@import "tailwindcss";
+
+/* ─── Modern High-Contrast Black & White Court & Advocate Design System ─────── */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafafa;
+  --bg-card: #ffffff;
+  --bg-dark: #000000;
+  --border-black: #000000;
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --border-medium: rgba(0, 0, 0, 0.2);
+  --text-primary: #000000;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --radius: 0.375rem;
+}
+
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+  background-color: #ffffff;
+}
+
+body {
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  background-color: #ffffff;
+  color: #000000;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ─── Typography ───────────────────────────────────────────────────────────── */
+.font-serif {
+  font-family: var(--font-playfair), Georgia, 'Times New Roman', serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair), Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+/* ─── Stark Monochrome Headings ────────────────────────────────────────────── */
+.gradient-text,
+.court-heading {
+  color: #000000;
+  display: inline-block;
+  position: relative;
+}
+
+/* ─── Architectural Black & White Cards ─────────────────────────────────────── */
+.glass {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-black);
+}
+
+.glass-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
+}
+
+.glass-card:hover {
+  background: #ffffff;
+  border-color: #000000;
+  transform: translateY(-4px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.09), 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+/* Stark Court Card */
+.court-card-stark {
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  border-radius: var(--radius);
+  box-shadow: 4px 4px 0px #000000;
+  transition: all 0.2s ease;
+}
+
+.court-card-stark:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0px #000000;
+}
+
+/* ─── Buttons (Stark Black & White) ─────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: #000000;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  border-radius: var(--radius);
+  border: 1.5px solid #000000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover {
+  background: #262626;
+  border-color: #262626;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  background: #ffffff;
+  color: #000000;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  border-radius: var(--radius);
+  border: 1.5px solid #000000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.btn-outline:hover {
+  background: #000000;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+}
+
+/* ─── Status Badges (Stark Legal Verdict Badges) ───────────────────────────── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 2px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-family: monospace;
+}
+
+.status-won {
+  background: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
+}
+
+.status-filed {
+  background: #f4f4f5;
+  color: #000000;
+  border: 1px solid #000000;
+}
+
+.status-hearing {
+  background: #e4e4e7;
+  color: #000000;
+  border: 1px solid #71717a;
+}
+
+.status-pending {
+  background: #ffffff;
+  color: #52525b;
+  border: 1px solid #d4d4d8;
+}
+
+/* ─── Section Spacing ───────────────────────────────────────────────────────── */
+.section-py {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+  position: relative;
+}
+
+@media (max-width: 768px) {
+  .section-py {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+.container-xl {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .container-xl {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-xl {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .container-xl {
+    padding-left: 6rem;
+    padding-right: 6rem;
+  }
+}
+
+/* ─── Section Labels (Courtroom Filing Headers) ─────────────────────────────── */
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #000000;
+  margin-bottom: 1rem;
+}
+
+.section-label::before {
+  content: '';
+  display: block;
+  width: 1.5rem;
+  height: 2.5px;
+  background: #000000;
+}
+
+/* ─── Form Inputs ───────────────────────────────────────────────────────────── */
+.form-input {
+  width: 100%;
+  padding: 0.875rem 1.125rem;
+  background: #ffffff;
+  border: 1.5px solid #000000;
+  border-radius: var(--radius);
+  color: #000000;
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #000000;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-track { background: #ffffff; }
+::-webkit-scrollbar-thumb { background: #000000; border-radius: 0px; }
+::-webkit-scrollbar-thumb:hover { background: #333333; }
+
+/* ─── Background Animations ────────────────────────────────────────────────── */
+@keyframes courtGridShift {
+  0% { background-position: 0 0; }
+  100% { background-position: 60px 60px; }
+}
+
+@keyframes slowRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes subtleFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes beamScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+.animate-slow-rotate {
+  animation: slowRotate 90s linear infinite;
+}
+
+.animate-subtle-float {
+  animation: subtleFloat 8s ease-in-out infinite;
+}
+
+.court-grid-lines {
+  background-image: 
+    linear-gradient(#000000 1px, transparent 1px),
+    linear-gradient(90deg, #000000 1px, transparent 1px);
+  background-size: 50px 50px;
+}

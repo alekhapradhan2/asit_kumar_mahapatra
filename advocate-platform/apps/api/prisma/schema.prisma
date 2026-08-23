@@ -1,0 +1,479 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// Advocate Case Management Platform — Prisma Schema
+// Database: PostgreSQL
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ───────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  CLIENT
+}
+
+enum CaseStatus {
+  CONSULTATION
+  DOCUMENTS_PENDING
+  PREPARING_CASE
+  FILED
+  REGISTERED
+  NOTICE_ISSUED
+  HEARING_SCHEDULED
+  HEARING_COMPLETED
+  EVIDENCE_STAGE
+  ARGUMENTS
+  AWAITING_JUDGMENT
+  JUDGMENT_DELIVERED
+  WON
+  SETTLED
+  CLOSED
+  LOST
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum UpdateSource {
+  OFFICIAL_COURT_DATA
+  ADVOCATE_UPDATE
+  ADMIN_UPDATE
+  SYSTEM_SYNC
+}
+
+enum Visibility {
+  ADMIN_ONLY
+  INTERNAL_TEAM
+  CLIENT_VISIBLE
+}
+
+enum DocumentType {
+  CLIENT_DOCUMENT
+  PETITION
+  AFFIDAVIT
+  NOTICE
+  COURT_ORDER
+  EVIDENCE
+  HEARING_DOCUMENT
+  JUDGMENT
+  FINAL_VERDICT
+  SETTLEMENT
+  OTHER
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum SyncStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+// ─── USER & AUTH ─────────────────────────────────────────────────────────────
+
+model User {
+  id              String         @id @default(cuid())
+  email           String         @unique
+  passwordHash    String
+  role            Role           @default(CLIENT)
+  isActive        Boolean        @default(true)
+  mustChangePass  Boolean        @default(false)
+  lastLoginAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  client          Client?
+  refreshTokens   RefreshToken[]
+  auditLogs       AuditLog[]
+  uploadedDocs    Document[]     @relation("UploadedDocs")
+  articles        Article[]      @relation("ArticleAuthor")
+  successStories  SuccessStory[] @relation("StoryAuthor")
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id          String    @id @default(cuid())
+  tokenHash   String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+// ─── CLIENTS ─────────────────────────────────────────────────────────────────
+
+model Client {
+  id             String     @id @default(cuid())
+  clientId       String     @unique // CLIENT-XXXXXX
+  userId         String     @unique
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName       String
+  email          String
+  mobile         String
+  address        String?
+  city           String?
+  state          String?
+  country        String?
+  pinCode        String?
+  dateOfBirth    DateTime?
+  govIdRef       String?    // encrypted reference — never store actual gov ID
+  profilePhoto   String?    // S3 key
+  emergencyName  String?
+  emergencyPhone String?
+  isActive       Boolean    @default(true)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  cases          Case[]
+  documents      Document[] @relation("ClientDocs")
+
+  @@index([clientId])
+  @@index([email])
+  @@index([mobile])
+  @@map("clients")
+}
+
+// ─── CASES ───────────────────────────────────────────────────────────────────
+
+model Case {
+  id                  String              @id @default(cuid())
+  internalCaseId      String              @unique // CASE-XXXXXX
+  clientRef           String?
+  clientId            String
+  client              Client              @relation(fields: [clientId], references: [id])
+  title               String
+  caseType            String
+  practiceArea        String
+  courtName           String?
+  courtLocation       String?
+  caseNumber          String?
+  cnrNumber           String?
+  filingNumber        String?
+  filingDate          DateTime?
+  registrationDate    DateTime?
+  currentStatus       CaseStatus          @default(CONSULTATION)
+  caseStage           String?
+  oppositeParty       String?
+  oppositeAdvocate    String?
+  judgeDetails        String?
+  nextHearingDate     DateTime?
+  prevHearingDate     DateTime?
+  priority            Priority            @default(NORMAL)
+  assignedAdvocate    String?
+  internalNotes       String?
+  isArchived          Boolean             @default(false)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  statusHistory       CaseStatusHistory[]
+  hearings            Hearing[]
+  documents           Document[]          @relation("CaseDocs")
+  externalRefs        ExternalCaseRef[]
+  verdict             Verdict?
+  parties             CaseParty[]
+
+  @@index([cnrNumber])
+  @@index([caseNumber])
+  @@index([clientId])
+  @@index([currentStatus])
+  @@index([nextHearingDate])
+  @@index([isArchived])
+  @@map("cases")
+}
+
+model CaseStatusHistory {
+  id              String       @id @default(cuid())
+  caseId          String
+  case            Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  status          CaseStatus
+  title           String
+  description     String?
+  date            DateTime
+  source          UpdateSource @default(ADVOCATE_UPDATE)
+  relatedDocId    String?
+  isClientVisible Boolean      @default(true)
+  createdBy       String?
+  createdAt       DateTime     @default(now())
+
+  @@index([caseId])
+  @@index([date])
+  @@map("case_status_history")
+}
+
+model Hearing {
+  id              String       @id @default(cuid())
+  caseId          String
+  case            Case         @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  hearingDate     DateTime
+  purpose         String?
+  result          String?
+  nextDate        DateTime?
+  notes           String?
+  source          UpdateSource @default(ADVOCATE_UPDATE)
+  isClientVisible Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([caseId])
+  @@index([hearingDate])
+  @@map("hearings")
+}
+
+model CaseParty {
+  id      String @id @default(cuid())
+  caseId  String
+  case    Case   @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  role    String // petitioner, respondent, witness, etc.
+  name    String
+  details String?
+
+  @@map("case_parties")
+}
+
+// ─── DOCUMENTS ───────────────────────────────────────────────────────────────
+
+model Document {
+  id            String       @id @default(cuid())
+  title         String
+  docType       DocumentType
+  category      String?
+  caseId        String?
+  case          Case?        @relation("CaseDocs", fields: [caseId], references: [id])
+  clientId      String?
+  client        Client?      @relation("ClientDocs", fields: [clientId], references: [id])
+  fileKey       String       // S3 object key
+  mimeType      String
+  sizeBytes     Int
+  visibility    Visibility   @default(ADMIN_ONLY)
+  description   String?
+  version       Int          @default(1)
+  tags          String[]
+  uploadedById  String
+  uploadedBy    User         @relation("UploadedDocs", fields: [uploadedById], references: [id])
+  uploadedAt    DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([caseId])
+  @@index([clientId])
+  @@index([visibility])
+  @@map("documents")
+}
+
+// ─── VERDICT / CASE ARCHIVE ──────────────────────────────────────────────────
+
+model Verdict {
+  id              String    @id @default(cuid())
+  caseId          String    @unique
+  case            Case      @relation(fields: [caseId], references: [id])
+  outcome         String    // WON / LOST / SETTLED / CLOSED
+  verdictDate     DateTime?
+  summary         String?
+  clientSummary   String?   // client-visible summary
+  internalNotes   String?
+  importantOrders String?
+  judgmentFileKey String?   // S3 key
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("verdicts")
+}
+
+// ─── COURT INTEGRATIONS ──────────────────────────────────────────────────────
+
+model ExternalCaseRef {
+  id            String     @id @default(cuid())
+  caseId        String
+  case          Case       @relation(fields: [caseId], references: [id], onDelete: Cascade)
+  provider      String     // e.g. "MANUAL", "ECOURTS_API"
+  externalRef   String?    // CNR / external case ID used by provider
+  lastSyncAt    DateTime?
+  syncStatus    SyncStatus @default(PENDING)
+  lastSuccessAt DateTime?
+  lastError     String?
+  metadata      Json?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([caseId])
+  @@map("external_case_refs")
+}
+
+model SyncLog {
+  id         String     @id @default(cuid())
+  caseId     String
+  provider   String
+  syncStatus SyncStatus
+  changes    Json?
+  error      String?
+  syncedAt   DateTime   @default(now())
+
+  @@index([caseId])
+  @@index([syncedAt])
+  @@map("sync_logs")
+}
+
+// ─── ARTICLES ────────────────────────────────────────────────────────────────
+
+model Article {
+  id            String           @id @default(cuid())
+  title         String
+  slug          String           @unique
+  shortDesc     String?
+  content       String           @db.Text
+  featuredImage String?
+  authorId      String
+  author        User             @relation("ArticleAuthor", fields: [authorId], references: [id])
+  categoryId    String?
+  category      ArticleCategory? @relation(fields: [categoryId], references: [id])
+  tags          String[]
+  practiceAreas String[]
+  status        ContentStatus    @default(DRAFT)
+  publishedAt   DateTime?
+  scheduledAt   DateTime?
+  seoTitle      String?
+  metaDesc      String?
+  focusKeywords String[]
+  canonicalUrl  String?
+  ogImage       String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([categoryId])
+  @@map("articles")
+}
+
+model ArticleCategory {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  articles Article[]
+
+  @@map("article_categories")
+}
+
+// ─── SUCCESS STORIES ─────────────────────────────────────────────────────────
+
+model SuccessStory {
+  id            String        @id @default(cuid())
+  title         String
+  slug          String        @unique
+  featuredImage String?
+  shortSummary  String?
+  fullStory     String        @db.Text
+  category      String?
+  practiceArea  String?
+  result        String?
+  timeline      Json?
+  location      String?
+  clientDisplay String?
+  isAnonymous   Boolean       @default(true)
+  status        ContentStatus @default(DRAFT)
+  publishedAt   DateTime?
+  authorId      String
+  author        User          @relation("StoryAuthor", fields: [authorId], references: [id])
+  seoTitle      String?
+  metaDesc      String?
+  canonicalUrl  String?
+  ogImage       String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@map("success_stories")
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  isRead    Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+// ─── AUDIT LOGS ──────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  action       String
+  resourceType String
+  resourceId   String?
+  ipAddress    String?
+  userAgent    String?
+  before       Json?
+  after        Json?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([resourceType, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── SITE & SEO SETTINGS ─────────────────────────────────────────────────────
+
+model SiteSettings {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+model SeoSettings {
+  id          String   @id @default(cuid())
+  pageKey     String   @unique // "home", "about", "contact", "articles", etc.
+  seoTitle    String?
+  metaDesc    String?
+  ogImage     String?
+  canonicalUrl String?
+  robots      String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("seo_settings")
+}
