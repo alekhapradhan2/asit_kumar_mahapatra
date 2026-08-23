@@ -19,6 +19,8 @@ import { articlesRouter } from './modules/articles/articles.routes';
 import { successStoriesRouter } from './modules/success-stories/successStories.routes';
 import { integrationsRouter } from './modules/integrations/integrations.routes';
 import { publicRouter } from './modules/public/public.routes';
+import { documentsRouter } from './modules/documents/documents.routes';
+import { messagesRouter } from './modules/messages/messages.routes';
 
 const app = express();
 
@@ -99,6 +101,8 @@ app.use('/api/v1/articles', articlesRouter);
 app.use('/api/v1/success-stories', successStoriesRouter);
 app.use('/api/v1/integrations', integrationsRouter);
 app.use('/api/v1/public', publicRouter);
+app.use('/api/v1/documents', documentsRouter);
+app.use('/api/v1/messages', messagesRouter);
 
 // ─── 404 + Error Handlers ─────────────────────────────────────────────────────
 app.use(notFoundHandler);

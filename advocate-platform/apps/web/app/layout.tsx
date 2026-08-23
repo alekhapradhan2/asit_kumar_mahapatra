@@ -47,7 +47,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="antialiased bg-white text-black selection:bg-black selection:text-white min-h-screen relative">{children}</body>
+      <body className="antialiased bg-white text-black selection:bg-black selection:text-white min-h-screen relative">
+        {children}
+      </body>
     </html>
   );
 }

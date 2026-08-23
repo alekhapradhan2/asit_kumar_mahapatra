@@ -175,7 +175,10 @@ export interface DocumentDTO {
   docType: DocumentType;
   category?: string | null;
   caseId?: string | null;
+  case?: { id: string; internalCaseId: string; title: string } | null;
   clientId?: string | null;
+  client?: { id: string; clientId: string; fullName: string } | null;
+  fileKey: string;
   mimeType: string;
   sizeBytes: number;
   visibility: Visibility;
@@ -183,7 +186,27 @@ export interface DocumentDTO {
   version: number;
   tags: string[];
   uploadedById: string;
+  uploadedBy?: { id: string; email: string; role: Role; client?: { fullName: string } | null } | null;
   uploadedAt: string;
+  updatedAt: string;
+}
+
+// ─── MESSAGE / COMMUNICATION ──────────────────────────────────────────────────
+
+export interface MessageDTO {
+  id: string;
+  clientId: string;
+  client?: { id: string; clientId: string; fullName: string };
+  senderId: string;
+  senderRole: Role;
+  sender?: { id: string; email: string; role: Role; client?: { fullName: string } | null };
+  subject?: string | null;
+  content: string;
+  isClientVisible: boolean;
+  isRead: boolean;
+  attachments?: any;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── ARTICLE ─────────────────────────────────────────────────────────────────
@@ -266,3 +289,4 @@ export interface PublicSiteConfig {
   defaultSeoTitle: string;
   defaultMetaDesc: string;
 }
+

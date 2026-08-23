@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -18,6 +18,9 @@ export function PublicNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
+  const navRef = useRef<HTMLDivElement | null>(null);
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -25,6 +28,33 @@ export function PublicNavbar() {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  // Update animated sliding pill position based on hover or active route
+  useEffect(() => {
+    const activeIdx = navLinks.findIndex((l) =>
+      l.href === '/' ? pathname === '/' : pathname.startsWith(l.href)
+    );
+    const targetIdx = hoveredIdx !== null ? hoveredIdx : activeIdx;
+
+    if (targetIdx !== -1 && linkRefs.current[targetIdx] && navRef.current) {
+      const linkEl = linkRefs.current[targetIdx]!;
+      const navEl = navRef.current!;
+      const navRect = navEl.getBoundingClientRect();
+      const linkRect = linkEl.getBoundingClientRect();
+
+      setPillStyle({
+        left: linkRect.left - navRect.left,
+        width: linkRect.width,
+        opacity: 1,
+      });
+    } else if (hoveredIdx === null && activeIdx === -1) {
+      setPillStyle((prev) => ({ ...prev, opacity: 0 }));
+    }
+  }, [hoveredIdx, pathname]);
+
+  const activeIdx = navLinks.findIndex((l) =>
+    l.href === '/' ? pathname === '/' : pathname.startsWith(l.href)
+  );
 
   return (
     <header
@@ -57,30 +87,37 @@ export function PublicNavbar() {
           </div>
         </Link>
 
-        {/* Center / Stretched: Desktop Nav with Animated Hover Capsule */}
+        {/* Center / Stretched: Desktop Nav with Smooth Sliding Black Capsule */}
         <nav
-          className="hidden lg:flex items-center gap-1.5 relative bg-neutral-100/90 p-1.5 rounded-full border border-neutral-200/80"
+          ref={navRef}
+          className="hidden lg:flex items-center relative bg-neutral-100/90 p-1.5 rounded-full border border-neutral-200/80"
           aria-label="Main navigation"
           onMouseLeave={() => setHoveredIdx(null)}
         >
+          {/* Animated Sliding Black Pill Element */}
+          <div
+            className="absolute top-1.5 bottom-1.5 bg-black rounded-full shadow-xs pointer-events-none transition-all duration-300 ease-[cubic-bezier(0.25,1,0.5,1)] -z-0"
+            style={{
+              transform: `translateX(${pillStyle.left}px)`,
+              width: `${pillStyle.width}px`,
+              opacity: pillStyle.opacity,
+            }}
+          />
+
           {navLinks.map((link, idx) => {
-            const isActive = pathname === link.href;
+            const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
+            const isCurrentlySelected = hoveredIdx !== null ? hoveredIdx === idx : isActive;
+
             return (
               <Link
                 key={link.href}
                 href={link.href}
+                ref={(el) => { linkRefs.current[idx] = el; }}
                 onMouseEnter={() => setHoveredIdx(idx)}
-                className={`relative px-5 py-2 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors duration-200 z-10 ${
-                  isActive ? 'text-black font-bold' : 'text-neutral-600 hover:text-black'
+                className={`relative px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-colors duration-200 z-10 select-none ${
+                  isCurrentlySelected ? 'text-white' : 'text-neutral-700 hover:text-white'
                 }`}
               >
-                {/* Active or Hovered Background Pill Animation */}
-                {isActive && (
-                  <span className="absolute inset-0 bg-white rounded-full shadow-xs -z-10 border border-neutral-200" />
-                )}
-                {hoveredIdx === idx && !isActive && (
-                  <span className="absolute inset-0 bg-white/70 rounded-full -z-10 transition-all duration-200" />
-                )}
                 {link.label}
               </Link>
             );
@@ -125,16 +162,21 @@ export function PublicNavbar() {
       {/* Mobile Menu Dropdown */}
       {mobileOpen && (
         <div className="lg:hidden w-full border-t border-neutral-200 bg-white/95 backdrop-blur-2xl px-6 py-5 space-y-2 shadow-xl animate-fade-in-up">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block px-4 py-3 text-xs uppercase tracking-wider font-bold text-neutral-800 hover:text-black hover:bg-neutral-100 rounded-lg transition-all"
-              onClick={() => setMobileOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`block px-4 py-3 text-xs uppercase tracking-wider font-bold rounded-lg transition-all ${
+                  isActive ? 'bg-black text-white' : 'text-neutral-800 hover:bg-neutral-100'
+                }`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <div className="pt-3 border-t border-neutral-200 flex flex-col gap-2">
             <Link
               href="/client/login"

@@ -108,6 +108,7 @@ model User {
   articles        Article[]      @relation("ArticleAuthor")
   successStories  SuccessStory[] @relation("StoryAuthor")
   notifications   Notification[]
+  sentMessages    Message[]      @relation("SentMessages")
 
   @@map("users")
 }
@@ -154,11 +155,35 @@ model Client {
 
   cases          Case[]
   documents      Document[] @relation("ClientDocs")
+  messages       Message[]
 
   @@index([clientId])
   @@index([email])
   @@index([mobile])
   @@map("clients")
+}
+
+// ─── MESSAGES ────────────────────────────────────────────────────────────────
+
+model Message {
+  id              String    @id @default(cuid())
+  clientId        String
+  client          Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  senderRole      Role
+  subject         String?
+  content         String    @db.Text
+  isClientVisible Boolean   @default(true)
+  isRead          Boolean   @default(false)
+  attachments     Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([clientId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("messages")
 }
 
 // ─── CASES ───────────────────────────────────────────────────────────────────

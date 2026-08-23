@@ -27,7 +27,7 @@ export function BackgroundEffects() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 3D Perspective Courtroom Engine with Ornate Scales of Justice from Reference
+  // Rock-Solid 3D Perspective Courtroom Engine with Ornate Scales of Justice
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -45,8 +45,8 @@ export function BackgroundEffects() {
     let targetMouseY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
-      targetMouseX = (e.clientX - width / 2) * 0.0006;
-      targetMouseY = (e.clientY - height / 2) * 0.0006;
+      targetMouseX = (e.clientX - width / 2) * 0.0005;
+      targetMouseY = (e.clientY - height / 2) * 0.0005;
     };
 
     const handleResize = () => {
@@ -69,7 +69,7 @@ export function BackgroundEffects() {
       edges: [number, number][];
     }
 
-    // ─── 1. Classic Ornate Scales of Justice (Matching User's Reference Image) ─
+    // ─── 1. Ornate Scales of Justice (Matching User Reference Image) ──────────
     const createOrnateScalesOfJustice = (): Model3D => {
       const vertices: Point3D[] = [];
       const edges: [number, number][] = [];
@@ -77,7 +77,7 @@ export function BackgroundEffects() {
       // Stepped Pedestal Base (2 circular tiers)
       const baseSegs = 16;
       for (let tier = 0; tier < 2; tier++) {
-        const r = tier === 0 ? 58 : 44;
+        const r = tier === 0 ? 56 : 42;
         const y = 85 - tier * 12;
         for (let i = 0; i < baseSegs; i++) {
           const a = (i / baseSegs) * Math.PI * 2;
@@ -90,24 +90,23 @@ export function BackgroundEffects() {
         if (i % 4 === 0) edges.push([i, baseSegs + i]);
       }
 
-      // Central Pillar Column with Decorative Finial
+      // Central Pillar Column & Finial Top
       const pillarIdx = vertices.length;
-      vertices.push({ x: 0, y: 70, z: 0 });   // base connection
-      vertices.push({ x: 0, y: -65, z: 0 });  // upper fulcrum joint
-      vertices.push({ x: 0, y: -78, z: 0 });  // finial sphere
+      vertices.push({ x: 0, y: 70, z: 0 });   // 0
+      vertices.push({ x: 0, y: -65, z: 0 });  // 1: fulcrum joint
+      vertices.push({ x: 0, y: -80, z: 0 });  // 2: top finial sphere
       edges.push([pillarIdx, pillarIdx + 1]);
       edges.push([pillarIdx + 1, pillarIdx + 2]);
 
       // Ornate Curved Swan-Neck Balance Arm
-      // Left arm curve (from center (0,-65) curving up then down to (-110,-55))
       const armIdx = vertices.length;
-      vertices.push({ x: 0, y: -65, z: 0 });          // 0: center joint
-      vertices.push({ x: -40, y: -78, z: 0 });        // 1: left arch peak
-      vertices.push({ x: -80, y: -74, z: 0 });        // 2: left dip
-      vertices.push({ x: -115, y: -58, z: 0 });       // 3: left hook end
-      vertices.push({ x: 40, y: -78, z: 0 });         // 4: right arch peak
-      vertices.push({ x: 80, y: -74, z: 0 });         // 5: right dip
-      vertices.push({ x: 115, y: -58, z: 0 });        // 6: right hook end
+      vertices.push({ x: 0, y: -65, z: 0 });          // armIdx + 0
+      vertices.push({ x: -40, y: -78, z: 0 });        // armIdx + 1
+      vertices.push({ x: -80, y: -74, z: 0 });        // armIdx + 2
+      vertices.push({ x: -115, y: -58, z: 0 });       // armIdx + 3: left hook
+      vertices.push({ x: 40, y: -78, z: 0 });         // armIdx + 4
+      vertices.push({ x: 80, y: -74, z: 0 });         // armIdx + 5
+      vertices.push({ x: 115, y: -58, z: 0 });        // armIdx + 6: right hook
 
       edges.push([armIdx, armIdx + 1]);
       edges.push([armIdx + 1, armIdx + 2]);
@@ -117,11 +116,12 @@ export function BackgroundEffects() {
       edges.push([armIdx + 4, armIdx + 5]);
       edges.push([armIdx + 5, armIdx + 6]);
 
-      // Function to add a classic 3D hanging pan bowl
-      const addHangingPan = (hookX: number, hookY: number, panRadius: number) => {
+      // Add Hanging Pan Bowl Helper
+      const addHangingPan = (hookIdx: number, hookX: number, hookY: number) => {
         const panRimY = hookY + 68;
         const panRimIdx = vertices.length;
-        const panSegs = 14;
+        const panSegs = 12;
+        const panRadius = 34;
 
         for (let i = 0; i < panSegs; i++) {
           const a = (i / panSegs) * Math.PI * 2;
@@ -136,22 +136,21 @@ export function BackgroundEffects() {
           edges.push([panRimIdx + i, panRimIdx + ((i + 1) % panSegs)]);
         }
 
-        // Hemispherical Pan Bottom Apex
+        // Bowl Apex Bottom
         const apexIdx = vertices.length;
         vertices.push({ x: hookX, y: panRimY + 16, z: 0 });
         for (let i = 0; i < panSegs; i += 3) {
           edges.push([panRimIdx + i, apexIdx]);
         }
 
-        // 3 Suspension Cords from hook to pan rim
-        const hookVertex = hookX < 0 ? armIdx + 3 : armIdx + 6;
-        edges.push([hookVertex, panRimIdx]);
-        edges.push([hookVertex, panRimIdx + 5]);
-        edges.push([hookVertex, panRimIdx + 10]);
+        // Suspension Cords
+        edges.push([hookIdx, panRimIdx]);
+        edges.push([hookIdx, panRimIdx + 4]);
+        edges.push([hookIdx, panRimIdx + 8]);
       };
 
-      addHangingPan(-115, -58, 34); // Left hanging bowl
-      addHangingPan(115, -58, 34);  // Right hanging bowl
+      addHangingPan(armIdx + 3, -115, -58); // Left pan
+      addHangingPan(armIdx + 6, 115, -58);  // Right pan
 
       return { vertices, edges };
     };
@@ -376,9 +375,8 @@ export function BackgroundEffects() {
     const lawBookModel = create3DLawBook();
     const icosahedronModel = createIcosahedron(110);
     const outerRing = create3DRing(240, 36);
-    const innerRing = create3DRing(175, 28);
 
-    const particleCount = 50;
+    const particleCount = 45;
     const particles3D: Array<Point3D & { vx: number; vy: number; vz: number; size: number }> = [];
 
     for (let i = 0; i < particleCount; i++) {
@@ -439,7 +437,7 @@ export function BackgroundEffects() {
         const p1 = projectedVerts[v1];
         const p2 = projectedVerts[v2];
 
-        if (p1.visible && p2.visible) {
+        if (p1 && p2 && p1.visible && p2.visible) {
           const edgeAlpha = Math.min(baseAlpha, (p1.scale + p2.scale) * (baseAlpha * 0.6));
           ctx.beginPath();
           ctx.moveTo(p1.x, p1.y);
@@ -448,23 +446,6 @@ export function BackgroundEffects() {
           ctx.stroke();
         }
       }
-    };
-
-    const drawRing = (ringPoints: Point3D[], rx: number, ry: number, rz: number, cx: number, cy: number, alpha: number) => {
-      const rotated = ringPoints.map(v => rotatePoint(v, rx, ry, rz));
-      const projected = rotated.map(v => project(v, cx, cy, 500));
-
-      ctx.beginPath();
-      for (let i = 0; i < projected.length; i++) {
-        const pt = projected[i];
-        if (!pt.visible) continue;
-        if (i === 0) ctx.moveTo(pt.x, pt.y);
-        else ctx.lineTo(pt.x, pt.y);
-      }
-      ctx.closePath();
-      ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
     };
 
     let time = 0;
@@ -501,11 +482,11 @@ export function BackgroundEffects() {
       for (let r = 0; r < gridRows; r++) {
         for (let c = 0; c < gridCols; c++) {
           const pt = gridPoints[r][c];
-          if (!pt.visible || pt.alpha <= 0) continue;
+          if (!pt || !pt.visible || pt.alpha <= 0) continue;
 
           if (c < gridCols - 1) {
             const next = gridPoints[r][c + 1];
-            if (next.visible) {
+            if (next && next.visible) {
               ctx.beginPath();
               ctx.moveTo(pt.x, pt.y);
               ctx.lineTo(next.x, next.y);
@@ -516,7 +497,7 @@ export function BackgroundEffects() {
 
           if (r < gridRows - 1) {
             const down = gridPoints[r + 1][c];
-            if (down.visible) {
+            if (down && down.visible) {
               ctx.beginPath();
               ctx.moveTo(pt.x, pt.y);
               ctx.lineTo(down.x, down.y);
@@ -552,14 +533,13 @@ export function BackgroundEffects() {
         }
       }
 
-      // ─── 3. Classic Ornate Scales of Justice (Hero Top Right) ───
+      // ─── 3. Classic Ornate Scales of Justice (Top Right) ───
       const scalesCX = width * 0.82;
-      const scalesCY = height * 0.35;
+      const scalesCY = height * 0.36;
       const scalesRotX = 0.15 + mouseY * 0.6;
       const scalesRotY = time * 0.3 + mouseX + scrollRot;
-      const balanceTilt = Math.sin(time * 0.9) * 0.09; // realistic balance scale tilt
+      const balanceTilt = Math.sin(time * 0.9) * 0.09;
       drawModel(scalesModel, scalesCX, scalesCY, scalesRotX, scalesRotY, balanceTilt, 0.26, 1.15);
-      drawRing(outerRing, scalesRotX * 1.1, scalesRotY * 0.9, balanceTilt, scalesCX, scalesCY, 0.14);
 
       // ─── 4. 3D Model: Judicial Gavel & Sound Block (Middle Left) ───
       const gavelCX = width * 0.15;

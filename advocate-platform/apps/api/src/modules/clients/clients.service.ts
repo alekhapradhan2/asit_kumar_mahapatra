@@ -122,9 +122,58 @@ export async function getClientById(id: string) {
     where: { id },
     include: {
       user: {
-        select: { lastLoginAt: true, isActive: true, createdAt: true },
+        select: { id: true, email: true, role: true, lastLoginAt: true, isActive: true, createdAt: true },
       },
-      _count: { select: { cases: true } },
+      cases: {
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          internalCaseId: true,
+          title: true,
+          caseType: true,
+          practiceArea: true,
+          courtName: true,
+          courtLocation: true,
+          caseNumber: true,
+          cnrNumber: true,
+          currentStatus: true,
+          caseStage: true,
+          nextHearingDate: true,
+          priority: true,
+          isArchived: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      documents: {
+        orderBy: { uploadedAt: 'desc' },
+        include: {
+          case: { select: { id: true, internalCaseId: true, title: true } },
+          uploadedBy: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              client: { select: { fullName: true } },
+            },
+          },
+        },
+      },
+      messages: {
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        include: {
+          sender: {
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              client: { select: { fullName: true } },
+            },
+          },
+        },
+      },
+      _count: { select: { cases: true, documents: true, messages: true } },
     },
   });
 
@@ -138,6 +187,7 @@ export async function getClientById(id: string) {
 
   return safeClient;
 }
+
 
 // ─── Update Client ────────────────────────────────────────────────────────────
 
