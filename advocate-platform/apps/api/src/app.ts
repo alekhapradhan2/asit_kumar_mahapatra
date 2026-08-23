@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import path from 'path';
 import helmet from 'helmet';
 import cors from 'cors';
 import compression from 'compression';
@@ -102,7 +103,8 @@ app.use('/api/v1/success-stories', successStoriesRouter);
 app.use('/api/v1/integrations', integrationsRouter);
 app.use('/api/v1/public', publicRouter);
 app.use('/api/v1/documents', documentsRouter);
-app.use('/api/v1/messages', messagesRouter);
+// Static file storage for downloaded PDFs & attachments
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ─── 404 + Error Handlers ─────────────────────────────────────────────────────
 app.use(notFoundHandler);
