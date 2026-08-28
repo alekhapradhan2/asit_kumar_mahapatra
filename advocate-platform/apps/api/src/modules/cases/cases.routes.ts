@@ -21,10 +21,14 @@ router.use(authenticate);
 
 // List + Get cases (clients see own; admins see all)
 router.get('/', validate(caseQuerySchema, 'query'), CasesController.listCases);
+router.post('/ecourts-query', CasesController.queryCNR);
 router.get('/:id', CasesController.getCase);
 router.get('/:id/timeline', CasesController.getTimeline);
 router.get('/:id/hearings', CasesController.listHearings);
 router.get('/:id/verdict', CasesController.getVerdict);
+router.get('/:id/ecourts-data', CasesController.getECourtsData);
+router.post('/:id/ecourts-sync', CasesController.syncECourts);
+router.get('/:id/judgment-download', CasesController.downloadJudgmentPdf);
 
 // Admin-only mutations
 router.post(

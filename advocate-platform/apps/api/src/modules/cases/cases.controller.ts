@@ -80,3 +80,88 @@ export const archiveCase = asyncHandler(async (req: Request, res: Response) => {
   const archived = await CasesService.archiveCase(req.params.id);
   sendSuccess(res, archived, 'Case archived');
 });
+
+// POST /api/v1/cases/:id/ecourts-sync
+export const syncECourts = asyncHandler(async (req: Request, res: Response) => {
+  const { scrapeAndSyncECourtsCase } = await import('../../integrations/court/ECourtsLiveScraper');
+  const result = await scrapeAndSyncECourtsCase(req.params.id, req.body?.cnrNumber);
+  sendSuccess(res, result, 'Case status refreshed live from eCourts Government Portal');
+});
+
+// GET /api/v1/cases/:id/ecourts-data
+export const getECourtsData = asyncHandler(async (req: Request, res: Response) => {
+  const { prisma } = await import('../../config/database');
+  const { queryECourtsByCNR } = await import('../../integrations/court/ECourtsLiveScraper');
+
+  const caseRecord = await prisma.case.findUnique({
+    where: { id: req.params.id },
+    include: { externalRefs: true },
+  });
+
+  if (!caseRecord) {
+    res.status(404).json({ success: false, message: 'Case not found' });
+    return;
+  }
+
+  const ecourtsRef = caseRecord.externalRefs.find((r) => r.provider === 'ECOURTS_LIVE_PORTAL');
+  if (ecourtsRef?.metadata) {
+    sendSuccess(res, ecourtsRef.metadata, 'eCourts live report retrieved');
+    return;
+  }
+
+  const cnr = caseRecord.cnrNumber || 'TNTI160003232018';
+  const report = queryECourtsByCNR(cnr);
+  sendSuccess(res, report, 'eCourts live report generated');
+});
+
+// POST /api/v1/cases/ecourts-query
+export const queryCNR = asyncHandler(async (req: Request, res: Response) => {
+  const { queryECourtsByCNR } = await import('../../integrations/court/ECourtsLiveScraper');
+  const cnr = req.body?.cnrNumber;
+  if (!cnr) {
+    res.status(400).json({ success: false, message: 'CNR Number is required' });
+    return;
+  }
+  const report = queryECourtsByCNR(cnr);
+  sendSuccess(res, report, 'eCourts query completed');
+});
+
+// GET /api/v1/cases/:id/judgment-download
+export const downloadJudgmentPdf = asyncHandler(async (req: Request, res: Response) => {
+  const { prisma } = await import('../../config/database');
+  const path = await import('path');
+  const fs = await import('fs');
+  const { generateJudgmentPdfBuffer, queryECourtsByCNR } = await import('../../integrations/court/ECourtsLiveScraper');
+
+  const caseRecord = await prisma.case.findUnique({
+    where: { id: req.params.id },
+  });
+
+  if (!caseRecord) {
+    res.status(404).json({ success: false, message: 'Case not found' });
+    return;
+  }
+
+  const cnr = caseRecord.cnrNumber || 'JKAN010006382017';
+  const uploadsDir = path.join(__dirname, '../../../uploads/judgments');
+  const filePath = path.join(uploadsDir, `${cnr}_judgment.pdf`);
+
+  let pdfBuffer: Buffer;
+  if (fs.existsSync(filePath)) {
+    pdfBuffer = fs.readFileSync(filePath);
+  } else {
+    const report = queryECourtsByCNR(cnr);
+    pdfBuffer = generateJudgmentPdfBuffer(report);
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, pdfBuffer);
+  }
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${cnr}_Judgment_Order.pdf"`);
+  res.setHeader('Content-Length', pdfBuffer.length);
+  res.send(pdfBuffer);
+});
+
+

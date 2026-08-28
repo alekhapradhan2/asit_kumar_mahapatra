@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import ECourtsLiveModal, { ECourtsCaseReport } from '@/components/shared/ECourtsLiveModal';
 
 interface ClientDetail {
   id: string;
@@ -46,6 +47,11 @@ export default function AdminClientDetailPage() {
   const [client, setClient] = useState<ClientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'cases' | 'documents' | 'messages'>('overview');
+
+  // eCourts modal & sync state
+  const [selectedECourtsReport, setSelectedECourtsReport] = useState<ECourtsCaseReport | null>(null);
+  const [selectedCaseId, setSelectedCaseId] = useState<string | undefined>(undefined);
+  const [syncingCaseId, setSyncingCaseId] = useState<string | null>(null);
 
   // Modals
   const [showEditModal, setShowEditModal] = useState(false);
@@ -97,6 +103,11 @@ export default function AdminClientDetailPage() {
   // Status toggle / notifications
   const [actionNotice, setActionNotice] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  const getDownloadUrl = (docId: string) => {
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_access_token') : '';
+    return `${process.env.NEXT_PUBLIC_API_URL}/documents/${docId}/download?token=${token || ''}`;
+  };
+
   const fetchClientDetails = async () => {
     const token = sessionStorage.getItem('admin_access_token');
     if (!token) {
@@ -147,23 +158,73 @@ export default function AdminClientDetailPage() {
     if (!token) return;
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients/${client.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ isActive: !client.isActive }),
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/clients/${clientId}/toggle-active`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}` },
       });
+
       if (res.ok) {
         setActionNotice({
           type: 'success',
-          message: `Client portal access ${!client.isActive ? 'activated' : 'disabled'} successfully`,
+          message: `Client portal access ${client.isActive ? 'locked' : 'unlocked'} successfully.`,
         });
         fetchClientDetails();
       }
     } catch {
       setActionNotice({ type: 'error', message: 'Failed to update client status' });
+    }
+  };
+
+  // eCourts sync & view
+  const handleSyncECourts = async (caseId: string, cnr?: string) => {
+    const token = sessionStorage.getItem('admin_access_token');
+    if (!token) return;
+
+    setSyncingCaseId(caseId);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/${caseId}/ecourts-sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ cnrNumber: cnr }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.data?.report) {
+          setSelectedECourtsReport(result.data.report);
+          setSelectedCaseId(caseId);
+        }
+        setActionNotice({ type: 'success', message: 'eCourts live status synchronized successfully!' });
+        fetchClientDetails();
+      } else {
+        const d = await res.json();
+        alert(d.message || 'Sync failed');
+      }
+    } catch {
+      alert('Error connecting to eCourts synchronization service');
+    } finally {
+      setSyncingCaseId(null);
+    }
+  };
+
+  const handleViewECourts = async (caseId: string) => {
+    const token = sessionStorage.getItem('admin_access_token');
+    if (!token) return;
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/cases/${caseId}/ecourts-data`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setSelectedECourtsReport(d.data);
+        setSelectedCaseId(caseId);
+      }
+    } catch {
+      alert('Failed to load eCourts ledger');
     }
   };
 
@@ -807,7 +868,30 @@ export default function AdminClientDetailPage() {
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-2 border-t border-neutral-100">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100">
+                      <div className="flex items-center gap-1.5">
+                        {c.cnrNumber && (
+                          <>
+                            <button
+                              onClick={() => handleSyncECourts(c.id, c.cnrNumber)}
+                              disabled={syncingCaseId === c.id}
+                              className="btn-outline text-[0.65rem] py-1 px-2.5 inline-flex items-center gap-1 bg-white hover:bg-black hover:text-white transition-all uppercase tracking-wider"
+                              title="Sync live status from services.ecourts.gov.in"
+                            >
+                              <span className={syncingCaseId === c.id ? 'animate-spin' : ''}>🔄</span>
+                              <span>{syncingCaseId === c.id ? 'Syncing...' : 'eCourts'}</span>
+                            </button>
+                            <Link
+                              href={`/admin/cases/${c.id}/ecourts`}
+                              className="btn-outline text-[0.65rem] py-1 px-2.5 inline-flex items-center gap-1 bg-neutral-100 hover:bg-neutral-200 uppercase tracking-wider"
+                              title="Open dedicated full-page eCourts case ledger"
+                            >
+                              🏛️ eCourts Page
+                            </Link>
+                          </>
+                        )}
+                      </div>
+
                       <Link
                         href={`/admin/cases`}
                         className="text-xs uppercase tracking-wider font-bold text-black hover:underline"
@@ -917,7 +1001,7 @@ export default function AdminClientDetailPage() {
                           </td>
                           <td className="p-3.5 text-right space-x-2">
                             <a
-                              href={`${process.env.NEXT_PUBLIC_API_URL}/documents/${doc.id}/download`}
+                              href={getDownloadUrl(doc.id)}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 font-bold text-black hover:underline px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 hover:border-black"
@@ -1009,7 +1093,7 @@ export default function AdminClientDetailPage() {
                             </td>
                             <td className="p-3.5 text-right space-x-2">
                               <a
-                                href={`${process.env.NEXT_PUBLIC_API_URL}/documents/${doc.id}/download`}
+                                href={getDownloadUrl(doc.id)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-1 font-bold text-black hover:underline px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 hover:border-black"
@@ -1561,6 +1645,19 @@ export default function AdminClientDetailPage() {
             </form>
           </div>
         </div>
+      )}
+      {/* ─── Modal: Full eCourts Report ─────────────────────────────────────── */}
+      {selectedECourtsReport && (
+        <ECourtsLiveModal
+          report={selectedECourtsReport}
+          caseId={selectedCaseId}
+          onClose={() => {
+            setSelectedECourtsReport(null);
+            setSelectedCaseId(undefined);
+          }}
+          onRefresh={selectedCaseId ? () => handleSyncECourts(selectedCaseId, selectedECourtsReport.cnrNumber) : undefined}
+          refreshing={syncingCaseId === selectedCaseId}
+        />
       )}
     </div>
   );

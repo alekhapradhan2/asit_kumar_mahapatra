@@ -128,6 +128,11 @@ export default function AdminDocumentsPage() {
     }
   };
 
+  const getDownloadUrl = (docId: string) => {
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('admin_access_token') : '';
+    return `${process.env.NEXT_PUBLIC_API_URL}/documents/${docId}/download?token=${token || ''}`;
+  };
+
   return (
     <div className="min-h-screen bg-neutral-50 p-8 space-y-6">
       {notice && (
@@ -313,7 +318,7 @@ export default function AdminDocumentsPage() {
                     </td>
                     <td className="p-3.5 text-right space-x-2">
                       <a
-                        href={`${process.env.NEXT_PUBLIC_API_URL}/documents/${doc.id}/download`}
+                        href={getDownloadUrl(doc.id)}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center gap-1 font-bold text-black hover:underline px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 hover:border-black"

@@ -66,11 +66,14 @@ export function FAQSection() {
               {categories.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all ${
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    setOpenIndex(0);
+                  }}
+                  className={`text-xs px-3.5 py-1.5 rounded-full font-semibold transition-all duration-300 cursor-pointer ${
                     activeCategory === cat
-                      ? 'bg-black text-white'
-                      : 'bg-white/80 border border-neutral-300 text-neutral-700 hover:border-black'
+                      ? 'bg-black text-white shadow-sm scale-105'
+                      : 'bg-white/80 border border-neutral-300 text-neutral-700 hover:border-black hover:bg-neutral-50'
                   }`}
                 >
                   {cat}
@@ -78,9 +81,9 @@ export function FAQSection() {
               ))}
             </div>
 
-            {/* Direct Support Card */}
-            <div className="p-6 rounded-xl bg-white/95 border border-neutral-200 shadow-xs mt-8">
-              <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center mb-3 text-black">
+            {/* Direct Support Card with Subtle Hover Lift */}
+            <div className="p-6 rounded-2xl bg-white/95 border border-neutral-200 shadow-sm mt-8 transition-all duration-300 hover:shadow-md hover:border-neutral-400 group">
+              <div className="w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center mb-3 text-black transition-transform duration-300 group-hover:scale-110">
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 3v18M4 7h16M4 7l3 7h-6l3-7M20 7l3 7h-6l3-7M9 21h6" />
                 </svg>
@@ -93,53 +96,71 @@ export function FAQSection() {
               </p>
               <Link
                 href="/contact"
-                className="w-full inline-flex items-center justify-center py-3 bg-black text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition-colors"
+                className="w-full inline-flex items-center justify-center py-3 bg-black text-white rounded-lg text-xs font-bold uppercase tracking-wider hover:bg-neutral-800 transition-all duration-200 shadow-xs hover:shadow-md"
               >
-                Request Case Consultation →
+                <span>Request Case Consultation</span>
+                <svg className="w-3.5 h-3.5 ml-2 transition-transform duration-200 group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
               </Link>
             </div>
           </div>
 
-          {/* Right Column: Interactive Accordion */}
-          <div className="lg:col-span-7 space-y-4">
-            {filteredFaqs.map((faq, i) => (
-              <div
-                key={i}
-                className="rounded-xl overflow-hidden bg-white/95 backdrop-blur-xs border border-neutral-200 transition-all duration-200"
-              >
-                <button
-                  id={`faq-item-${i}`}
-                  className="w-full flex items-center justify-between p-5 sm:p-6 text-left gap-4 hover:bg-neutral-50 transition-colors"
-                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  aria-expanded={openIndex === i}
-                >
-                  <div className="space-y-1">
-                    <span className="text-[0.65rem] uppercase tracking-widest font-bold text-neutral-500 font-mono block">
-                      {faq.category}
-                    </span>
-                    <span className="text-sm sm:text-base font-bold text-black tracking-tight block">
-                      {faq.q}
-                    </span>
-                  </div>
+          {/* Right Column: Smooth Animated Accordion */}
+          <div className="lg:col-span-7 space-y-3.5">
+            {filteredFaqs.map((faq, i) => {
+              const isOpen = openIndex === i;
 
-                  <span
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold flex-shrink-0 transition-transform duration-200 ${
-                      openIndex === i
-                        ? 'bg-black text-white rotate-45'
-                        : 'bg-neutral-100 text-neutral-700'
+              return (
+                <div
+                  key={`${faq.category}-${i}`}
+                  className={`rounded-xl overflow-hidden bg-white/95 backdrop-blur-xs border transition-all duration-300 ${
+                    isOpen
+                      ? 'border-black/70 shadow-md ring-1 ring-black/5 bg-white'
+                      : 'border-neutral-200 hover:border-neutral-400 shadow-2xs hover:shadow-xs'
+                  }`}
+                >
+                  <button
+                    id={`faq-item-${i}`}
+                    className="w-full flex items-center justify-between p-5 sm:p-6 text-left gap-4 hover:bg-neutral-50/70 transition-colors cursor-pointer"
+                    onClick={() => setOpenIndex(isOpen ? null : i)}
+                    aria-expanded={isOpen}
+                  >
+                    <div className="space-y-1 pr-2">
+                      <span className="text-[0.65rem] uppercase tracking-widest font-bold text-neutral-500 font-mono block">
+                        {faq.category}
+                      </span>
+                      <span className={`text-sm sm:text-base font-bold tracking-tight block transition-colors duration-200 ${isOpen ? 'text-black' : 'text-neutral-900'}`}>
+                        {faq.q}
+                      </span>
+                    </div>
+
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-mono font-bold flex-shrink-0 transition-all duration-300 ease-out ${
+                        isOpen
+                          ? 'bg-black text-white rotate-45 scale-105 shadow-xs'
+                          : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 rotate-0'
+                      }`}
+                    >
+                      +
+                    </span>
+                  </button>
+
+                  {/* Smooth Animated Height & Opacity Collapse using CSS Grid */}
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                     }`}
                   >
-                    +
-                  </span>
-                </button>
-
-                {openIndex === i && (
-                  <div className="px-5 sm:px-6 pb-6 text-xs sm:text-sm text-neutral-700 leading-relaxed border-t border-neutral-100 pt-4 bg-neutral-50/50 animate-fade-in-up">
-                    {faq.a}
+                    <div className="overflow-hidden">
+                      <div className="px-5 sm:px-6 pb-6 text-xs sm:text-sm text-neutral-700 leading-relaxed border-t border-neutral-100 pt-4 bg-neutral-50/50 transition-all duration-300">
+                        {faq.a}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

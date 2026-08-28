@@ -10,6 +10,7 @@ interface CaseDTO {
   caseType: string;
   practiceArea: string;
   courtName?: string;
+  cnrNumber?: string;
   currentStatus: string;
   nextHearingDate?: string;
   priority: string;
@@ -138,7 +139,13 @@ export default function ClientDashboard() {
 
   const handleLogout = () => {
     sessionStorage.clear();
+    document.cookie = 'client_token=; path=/; max-age=0; SameSite=Lax';
     router.replace('/client/login');
+  };
+
+  const getDownloadUrl = (docId: string) => {
+    const token = typeof window !== 'undefined' ? sessionStorage.getItem('client_access_token') : '';
+    return `${process.env.NEXT_PUBLIC_API_URL}/documents/${docId}/download?token=${token || ''}`;
   };
 
   // Client uploads document to advocate
@@ -171,7 +178,7 @@ export default function ClientDashboard() {
         setUploadTitle('');
         setUploadDescription('');
         setUploadCaseId('');
-        setNotice('Document uploaded successfully. It is now accessible to the Advocate/Firm.');
+        setNotice('Document uploaded successfully. It is now accessible to the Advocate.');
         fetchDashboardData();
       } else {
         const d = await res.json();
@@ -201,23 +208,22 @@ export default function ClientDashboard() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          subject: msgSubject || undefined,
-          content: msgContent,
-          isClientVisible: true,
+          subject: msgSubject.trim() || undefined,
+          content: msgContent.trim(),
         }),
       });
 
       if (res.ok) {
         setMsgSubject('');
         setMsgContent('');
-        setNotice('Message sent successfully to Advocate & Super Admin.');
+        setNotice('Message sent directly to your legal team.');
         fetchDashboardData();
       } else {
         const d = await res.json();
         setError(d.message || 'Failed to send message');
       }
     } catch {
-      setError('Error sending message');
+      setError('Failed to connect to server');
     } finally {
       setSendingMsg(false);
     }
@@ -240,9 +246,19 @@ export default function ClientDashboard() {
   const firmDocs = documents.filter((d) => d.uploadedBy?.role !== 'CLIENT');
   const myUploads = documents.filter((d) => d.uploadedBy?.role === 'CLIENT');
 
+  // Find nearest upcoming hearing
+  const upcomingHearings = cases
+    .filter((c) => c.nextHearingDate && new Date(c.nextHearingDate) >= new Date())
+    .sort(
+      (a, b) =>
+        new Date(a.nextHearingDate!).getTime() -
+        new Date(b.nextHearingDate!).getTime()
+    );
+  const nextHearingCase = upcomingHearings[0];
+
   return (
-    <div className="container-xl py-8 space-y-6">
-      {/* Notice Banner */}
+    <div className="container-xl space-y-6 page-transition">
+      {/* ─── Notice & Error Banners ─────────────────────────────────────────── */}
       {notice && (
         <div className="p-3.5 px-6 rounded bg-black text-white text-xs font-semibold flex items-center justify-between shadow-md">
           <span>✓ {notice}</span>
@@ -252,7 +268,6 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* Error Banner */}
       {error && (
         <div className="p-3.5 px-6 rounded bg-red-50 border border-red-200 text-red-700 text-xs font-semibold flex items-center justify-between">
           <span>⚠️ {error}</span>
@@ -262,10 +277,10 @@ export default function ClientDashboard() {
         </div>
       )}
 
-      {/* Welcome Header */}
-      <div className="glass-card p-6 sm:p-8 bg-white border border-neutral-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* ─── Client Welcome & ID Header ───────────────────────────────────────── */}
+      <div className="glass-card p-6 sm:p-8 bg-white border border-neutral-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-sm bg-black text-white flex items-center justify-center font-serif text-2xl font-bold flex-shrink-0">
+          <div className="w-14 h-14 rounded-sm bg-black text-white flex items-center justify-center font-serif text-2xl font-bold flex-shrink-0 shadow-xs">
             {user?.fullName ? user.fullName.charAt(0) : 'C'}
           </div>
           <div>
@@ -279,16 +294,16 @@ export default function ClientDashboard() {
               Welcome, {user?.fullName || 'Client'}
             </h1>
             <p className="text-xs text-neutral-500 mt-0.5">
-              Secure portal for managing your legal cases, court documents, and advocate communications
+              Authorized portal for court dates, official filings, petitions, and advocate messaging
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <button
             onClick={() => setShowUploadModal(true)}
             id="btn-client-quick-upload"
-            className="btn-primary text-xs uppercase tracking-wider py-2 px-4 inline-flex items-center gap-1.5"
+            className="btn-primary text-xs uppercase tracking-wider py-2.5 px-4 inline-flex items-center gap-1.5 flex-1 md:flex-initial justify-center"
           >
             <span>📤</span>
             <span>Upload Document</span>
@@ -296,63 +311,139 @@ export default function ClientDashboard() {
           <button
             onClick={handleLogout}
             id="logout-btn"
-            className="btn-outline text-xs uppercase tracking-wider py-2 px-4"
+            className="btn-outline text-xs uppercase tracking-wider py-2.5 px-4 flex-1 md:flex-initial justify-center bg-white"
           >
             Sign Out
           </button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex border-b border-neutral-200 gap-8 text-xs font-bold uppercase tracking-wider overflow-x-auto bg-white px-6 rounded-t border-t border-x">
+      {/* ─── Next Hearing Hero Alert (if scheduled) ─────────────────────────── */}
+      {nextHearingCase && (
+        <div className="p-6 rounded-lg bg-black text-white shadow-lg border border-black flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded bg-white/10 flex items-center justify-center text-2xl flex-shrink-0">
+              🏛️
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[0.65rem] font-bold uppercase tracking-widest text-amber-400">
+                  ⚡ Scheduled Court Hearing Alert
+                </span>
+                <span className="bg-white/20 text-white text-[0.65rem] px-2 py-0.5 rounded font-mono">
+                  {nextHearingCase.internalCaseId}
+                </span>
+              </div>
+              <h2 className="font-serif text-lg font-bold text-white mt-1">
+                {nextHearingCase.title}
+              </h2>
+              <div className="text-xs text-neutral-300 flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                <span>Court: {nextHearingCase.courtName || 'High Court of Orissa'}</span>
+                <span>•</span>
+                <span>Matter: {nextHearingCase.practiceArea}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 self-end md:self-center">
+            <div className="text-right">
+              <div className="text-[0.65rem] uppercase tracking-widest text-neutral-400 font-bold">
+                Scheduled Date
+              </div>
+              <div className="font-serif text-lg font-bold text-white">
+                📅 {new Date(nextHearingCase.nextHearingDate!).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </div>
+            </div>
+            <Link
+              href={`/client/cases/${nextHearingCase.id}`}
+              className="py-2.5 px-4 rounded bg-white text-black text-xs font-bold uppercase tracking-wider hover:bg-neutral-200 transition-colors"
+            >
+              Case Timeline →
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Metric Stat Cards ────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Registered Cases', value: cases.length, icon: '📁', tab: 'cases' as const },
+          { label: 'Court Orders & Petitions', value: firmDocs.length, icon: '⚖️', tab: 'documents' as const },
+          { label: 'My Uploaded Documents', value: myUploads.length, icon: '📤', tab: 'documents' as const },
+          { label: 'Advocate Messages', value: messages.length, icon: '💬', tab: 'messages' as const },
+        ].map((item) => (
+          <div
+            key={item.label}
+            onClick={() => setActiveTab(item.tab)}
+            className="glass-card p-5 bg-white border border-neutral-200 shadow-sm hover:border-black cursor-pointer transition-all flex items-center justify-between"
+          >
+            <div>
+              <div className="font-serif text-3xl font-bold text-black">{item.value}</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-neutral-500 mt-1">
+                {item.label}
+              </div>
+            </div>
+            <span className="text-2xl p-2 rounded bg-neutral-100 border border-neutral-200">
+              {item.icon}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* ─── Navigation Tabs ─────────────────────────────────────────────────── */}
+      <div className="flex border-b border-neutral-200 gap-8 text-xs font-bold uppercase tracking-wider overflow-x-auto bg-white px-6 rounded-t border-t border-x shadow-xs">
         <button
           onClick={() => setActiveTab('cases')}
-          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeTab === 'cases'
               ? 'border-black text-black'
               : 'border-transparent text-neutral-500 hover:text-black'
           }`}
         >
-          <span>📁 My Cases</span>
+          <span>📁 My Cases & Matters</span>
           <span className="bg-neutral-100 px-2 py-0.5 rounded-full text-[0.65rem] border border-neutral-200">
             {cases.length}
           </span>
         </button>
         <button
           onClick={() => setActiveTab('documents')}
-          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeTab === 'documents'
               ? 'border-black text-black'
               : 'border-transparent text-neutral-500 hover:text-black'
           }`}
         >
-          <span>📄 Legal Documents</span>
+          <span>📄 Court Documents & Orders</span>
           <span className="bg-neutral-100 px-2 py-0.5 rounded-full text-[0.65rem] border border-neutral-200">
             {documents.length}
           </span>
         </button>
         <button
           onClick={() => setActiveTab('messages')}
-          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeTab === 'messages'
               ? 'border-black text-black'
               : 'border-transparent text-neutral-500 hover:text-black'
           }`}
         >
-          <span>💬 Communications</span>
+          <span>💬 Advocate Communications</span>
           <span className="bg-neutral-100 px-2 py-0.5 rounded-full text-[0.65rem] border border-neutral-200">
             {messages.length}
           </span>
         </button>
         <button
           onClick={() => setActiveTab('profile')}
-          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
+          className={`py-4 border-b-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-2 ${
             activeTab === 'profile'
               ? 'border-black text-black'
               : 'border-transparent text-neutral-500 hover:text-black'
           }`}
         >
-          👤 My Profile
+          <span>👤 My Client Profile</span>
         </button>
       </div>
 
@@ -360,8 +451,10 @@ export default function ClientDashboard() {
       {activeTab === 'cases' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-serif text-lg font-bold text-black">Your Legal Matters & Cases</h2>
-            <span className="text-xs text-neutral-500 font-semibold">{cases.length} Registered Case{cases.length !== 1 ? 's' : ''}</span>
+            <h2 className="font-serif text-lg font-bold text-black">Your Court Cases & Legal Matters</h2>
+            <span className="text-xs text-neutral-500 font-semibold">
+              {cases.length} Registered Case{cases.length !== 1 ? 's' : ''}
+            </span>
           </div>
 
           {cases.length === 0 ? (
@@ -369,7 +462,7 @@ export default function ClientDashboard() {
               <div className="text-5xl mb-4">📁</div>
               <h3 className="font-serif text-xl font-bold text-black mb-2">No Cases Registered Yet</h3>
               <p className="text-neutral-500 text-xs max-w-md mx-auto">
-                Your cases will appear here once registered by your advocate. You can also message your advocate or upload required documents.
+                Your cases will appear here once registered by your advocate. You can also upload required documents or message your advocate.
               </p>
             </div>
           ) : (
@@ -394,7 +487,13 @@ export default function ClientDashboard() {
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-neutral-600">
                       <span>📋 {c.practiceArea}</span>
                       {c.courtName && <span>🏛️ {c.courtName}</span>}
+                      {c.cnrNumber && (
+                        <span className="font-mono bg-neutral-100 px-1.5 py-0.5 rounded border border-neutral-200 text-black font-semibold text-[0.65rem]">
+                          🏛️ CNR: {c.cnrNumber}
+                        </span>
+                      )}
                     </div>
+
                     {c.nextHearingDate && (
                       <div className="mt-3 p-2.5 rounded bg-neutral-100 border border-neutral-200 text-xs font-semibold text-black">
                         📅 Next Hearing Scheduled:{' '}
@@ -423,9 +522,9 @@ export default function ClientDashboard() {
         <div className="space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-neutral-200 pb-4">
             <div>
-              <h2 className="font-serif text-lg font-bold text-black">Legal Documents & Filings</h2>
+              <h2 className="font-serif text-lg font-bold text-black">Legal Documents & Court Orders</h2>
               <p className="text-xs text-neutral-500">
-                Access court orders and petitions shared by your advocate, and upload case documents
+                Access court orders, petitions, and stays shared by your advocate, and upload case records
               </p>
             </div>
             <button
@@ -443,7 +542,7 @@ export default function ClientDashboard() {
             <div className="flex items-center justify-between">
               <h3 className="font-serif font-bold text-base text-black flex items-center gap-2">
                 <span>⚖️</span>
-                <span>Documents Shared by Advocate / Firm</span>
+                <span>Court Orders & Petitions Shared by Advocate</span>
               </h3>
               <span className="text-xs text-neutral-500 font-semibold">{firmDocs.length} Document{firmDocs.length !== 1 ? 's' : ''}</span>
             </div>
@@ -473,7 +572,7 @@ export default function ClientDashboard() {
                           </span>
                         </td>
                         <td className="p-3.5 font-mono text-[0.7rem] text-neutral-600">
-                          {doc.case ? `${doc.case.internalCaseId} (${doc.case.title})` : 'General / Matter'}
+                          {doc.case ? `${doc.case.internalCaseId} (${doc.case.title})` : 'General Matter'}
                         </td>
                         <td className="p-3.5 text-neutral-500">
                           {new Date(doc.uploadedAt).toLocaleDateString('en-IN', {
@@ -484,7 +583,7 @@ export default function ClientDashboard() {
                         </td>
                         <td className="p-3.5 text-right">
                           <a
-                            href={`${process.env.NEXT_PUBLIC_API_URL}/documents/${doc.id}/download`}
+                            href={getDownloadUrl(doc.id)}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 font-bold text-black bg-neutral-100 hover:bg-black hover:text-white px-3 py-1.5 rounded transition-all border border-neutral-300 hover:border-black text-[0.7rem] uppercase tracking-wider"
@@ -499,7 +598,7 @@ export default function ClientDashboard() {
               </div>
             ) : (
               <div className="glass-card p-6 bg-white border border-neutral-200 text-center text-xs text-neutral-400">
-                No documents shared by your advocate yet.
+                No court orders or petitions shared by your advocate yet.
               </div>
             )}
           </div>
@@ -539,7 +638,7 @@ export default function ClientDashboard() {
                           </span>
                         </td>
                         <td className="p-3.5 font-mono text-[0.7rem] text-neutral-600">
-                          {doc.case ? `${doc.case.internalCaseId} (${doc.case.title})` : 'General / Matter'}
+                          {doc.case ? `${doc.case.internalCaseId} (${doc.case.title})` : 'General Matter'}
                         </td>
                         <td className="p-3.5 text-neutral-500">
                           {new Date(doc.uploadedAt).toLocaleDateString('en-IN', {
@@ -550,7 +649,7 @@ export default function ClientDashboard() {
                         </td>
                         <td className="p-3.5 text-right">
                           <a
-                            href={`${process.env.NEXT_PUBLIC_API_URL}/documents/${doc.id}/download`}
+                            href={getDownloadUrl(doc.id)}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 font-bold text-black hover:underline px-2.5 py-1 rounded bg-neutral-100 border border-neutral-300 text-[0.7rem]"
@@ -584,7 +683,7 @@ export default function ClientDashboard() {
           <div className="border-b border-neutral-200 pb-3">
             <h2 className="font-serif text-lg font-bold text-black">Direct Advocate Communications</h2>
             <p className="text-xs text-neutral-500">
-              Send questions or updates directly to your legal team and view replies
+              Send inquiries, document clarifications, or urgent hearing updates directly to your legal team
             </p>
           </div>
 
@@ -593,22 +692,42 @@ export default function ClientDashboard() {
             <div className="glass-card p-6 bg-white border border-neutral-200 shadow-sm space-y-4 h-fit">
               <h3 className="font-serif font-bold text-base text-black flex items-center gap-2">
                 <span>✍️</span>
-                <span>Send Message to Advocate</span>
+                <span>Send Message to Legal Team</span>
               </h3>
+
+              <div className="space-y-1">
+                <label className="text-[0.65rem] uppercase tracking-wider font-bold text-neutral-400">Quick Templates</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Hearing Date Query',
+                    'Document Verification',
+                    'Bail / Interim Status',
+                  ].map((temp) => (
+                    <button
+                      key={temp}
+                      type="button"
+                      onClick={() => setMsgSubject(temp)}
+                      className="px-2 py-1 rounded bg-neutral-100 hover:bg-neutral-200 text-[0.65rem] font-bold text-neutral-700 border border-neutral-200 transition-colors"
+                    >
+                      {temp}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <form onSubmit={handleSendMessage} className="space-y-3">
                 <div>
-                  <label className="form-label text-xs">Subject (Optional)</label>
+                  <label className="form-label text-xs">Subject</label>
                   <input
                     type="text"
-                    placeholder="e.g. Document clarification / Query"
+                    placeholder="e.g. Document clarification / Hearing query"
                     className="form-input text-xs py-2"
                     value={msgSubject}
                     onChange={(e) => setMsgSubject(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="form-label text-xs">Message *</label>
+                  <label className="form-label text-xs">Message Content *</label>
                   <textarea
                     required
                     rows={4}
@@ -623,7 +742,7 @@ export default function ClientDashboard() {
                   disabled={sendingMsg || !msgContent.trim()}
                   className="btn-primary w-full text-xs uppercase tracking-wider py-2.5 justify-center"
                 >
-                  {sendingMsg ? 'Sending...' : '📤 Send Message'}
+                  {sendingMsg ? 'Sending...' : '📤 Send to Advocate'}
                 </button>
               </form>
             </div>
@@ -631,7 +750,7 @@ export default function ClientDashboard() {
             {/* Feed */}
             <div className="lg:col-span-2 glass-card p-6 bg-white border border-neutral-200 shadow-sm space-y-4">
               <h3 className="font-serif font-bold text-base text-black border-b border-neutral-100 pb-3">
-                Message History ({messages.length})
+                Communication History ({messages.length})
               </h3>
 
               {messages.length > 0 ? (
@@ -690,12 +809,12 @@ export default function ClientDashboard() {
       {activeTab === 'profile' && (
         <div className="glass-card p-6 sm:p-8 bg-white border border-neutral-200 shadow-sm space-y-6 max-w-2xl">
           <h2 className="font-serif font-bold text-xl text-black border-b border-neutral-100 pb-3">
-            Registered Account & Profile
+            Registered Client Representation Profile
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <span className="text-[0.7rem] uppercase tracking-wider font-bold text-neutral-400 block mb-1">
-                Client ID
+                Authorized Client ID
               </span>
               <span className="font-mono font-bold text-black text-sm bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">
                 {user?.clientId}
@@ -703,7 +822,7 @@ export default function ClientDashboard() {
             </div>
             <div>
               <span className="text-[0.7rem] uppercase tracking-wider font-bold text-neutral-400 block mb-1">
-                Full Name
+                Full Legal Name
               </span>
               <span className="font-bold text-black text-sm">{user?.fullName}</span>
             </div>
@@ -715,26 +834,29 @@ export default function ClientDashboard() {
             </div>
             <div>
               <span className="text-[0.7rem] uppercase tracking-wider font-bold text-neutral-400 block mb-1">
-                Role
+                Portal Access Status
               </span>
-              <span className="status-badge status-won text-[0.65rem]">CLIENT</span>
+              <span className="status-badge status-won text-[0.65rem]">AUTHORIZED CLIENT</span>
             </div>
           </div>
 
-          <div className="p-4 rounded bg-neutral-50 border border-neutral-200 text-xs text-neutral-600">
-            💡 If you need to update your registered email address, mobile number, or residential address, please contact our office or message your advocate via the Communications tab.
+          <div className="p-4 rounded bg-neutral-50 border border-neutral-200 text-xs text-neutral-600 space-y-1">
+            <div className="font-bold text-black">💡 Client Portal Security Notice:</div>
+            <div>
+              Your records are protected by legal privilege. To update contact information or submit additional evidence, message your advocate directly in the Communications tab or visit the Chamber Complex.
+            </div>
           </div>
         </div>
       )}
 
       {/* ──────── MODAL: CLIENT UPLOAD DOCUMENT ──────── */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
           <div className="glass-card bg-white p-8 w-full max-w-lg space-y-4 border border-black shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
               <div>
                 <h2 className="font-serif text-lg font-bold text-black">Upload Document to Advocate</h2>
-                <p className="text-xs text-neutral-500">Submit ID proofs, agreements, evidence, or records</p>
+                <p className="text-xs text-neutral-500">Submit ID proofs, agreements, revenue records, or evidence</p>
               </div>
               <button
                 onClick={() => setShowUploadModal(false)}
@@ -766,7 +888,7 @@ export default function ClientDashboard() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Identity Proof / Revenue Record"
+                  placeholder="e.g. Identity Proof / Revenue Record / Affidavit"
                   className="form-input text-xs py-2"
                   value={uploadTitle}
                   onChange={(e) => setUploadTitle(e.target.value)}
@@ -806,18 +928,14 @@ export default function ClientDashboard() {
               </div>
 
               <div>
-                <label className="form-label text-xs">Description / Remarks (Optional)</label>
+                <label className="form-label text-xs">Notes / Remarks (Optional)</label>
                 <textarea
                   rows={2}
-                  placeholder="Notes for the advocate about this document..."
+                  placeholder="Brief note for the advocate regarding this document..."
                   className="form-input text-xs py-2 resize-none"
                   value={uploadDescription}
                   onChange={(e) => setUploadDescription(e.target.value)}
                 />
-              </div>
-
-              <div className="p-3 bg-neutral-50 rounded border border-neutral-200 text-[0.7rem] text-neutral-600">
-                🔒 Uploaded documents are encrypted and instantly delivered to your Advocate in their Admin Portal.
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200">
@@ -833,7 +951,7 @@ export default function ClientDashboard() {
                   disabled={uploading || !uploadFile}
                   className="btn-primary text-xs py-2 px-5"
                 >
-                  {uploading ? 'Uploading...' : 'Submit to Advocate'}
+                  {uploading ? 'Uploading...' : 'Submit Document to Advocate'}
                 </button>
               </div>
             </form>

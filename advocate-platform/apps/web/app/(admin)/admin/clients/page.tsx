@@ -14,8 +14,8 @@ export default function AdminClientsPage() {
     email: '',
     mobile: '',
     password: 'Password@123',
-    city: '',
-    state: '',
+    city: 'Cuttack',
+    state: 'Odisha',
     address: '',
     pinCode: '',
     emergencyName: '',
@@ -26,10 +26,7 @@ export default function AdminClientsPage() {
 
   const fetchClients = async () => {
     const token = sessionStorage.getItem('admin_access_token');
-    if (!token) {
-      router.replace('/admin/login');
-      return;
-    }
+    if (!token) return;
     try {
       setLoading(true);
       const res = await fetch(
@@ -43,7 +40,7 @@ export default function AdminClientsPage() {
         setClients(data.data || []);
       }
     } catch {
-      // silently fail in offline/demo
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -81,8 +78,8 @@ export default function AdminClientsPage() {
         email: '',
         mobile: '',
         password: 'Password@123',
-        city: '',
-        state: '',
+        city: 'Cuttack',
+        state: 'Odisha',
         address: '',
         pinCode: '',
         emergencyName: '',
@@ -100,26 +97,18 @@ export default function AdminClientsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50 p-8 space-y-6">
-      {/* Header */}
+    <div className="space-y-6 page-transition">
+      {/* ─── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-neutral-200 pb-6">
-        <div>
-          <Link
-            href="/admin/dashboard"
-            className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black font-bold mb-2 inline-flex items-center gap-1.5 transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
-          <div className="flex items-center gap-3 mt-1">
-            <div className="w-9 h-9 rounded-sm bg-black text-white flex items-center justify-center font-bold text-sm">
-              👥
-            </div>
-            <div>
-              <h1 className="font-serif text-2xl font-bold text-black">Client Management</h1>
-              <p className="text-xs text-neutral-500">
-                Click any client to open their dedicated Client Portal workspace, cases, documents, and messages
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-sm bg-black text-white flex items-center justify-center font-bold text-lg shadow-xs">
+            👥
+          </div>
+          <div>
+            <h1 className="font-serif text-2xl font-bold text-black">Client Directory</h1>
+            <p className="text-xs text-neutral-500">
+              Manage client representation files, portal access credentials, and direct communications
+            </p>
           </div>
         </div>
         <button
@@ -131,27 +120,27 @@ export default function AdminClientsPage() {
         </button>
       </div>
 
-      {/* Filter / Search Bar */}
+      {/* ─── Filter / Search Bar ────────────────────────────────────────────── */}
       <div className="glass-card p-4 flex flex-col sm:flex-row gap-4 bg-white border border-neutral-200 shadow-sm">
         <div className="relative flex-1">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 text-sm">🔍</span>
           <input
             type="text"
-            className="form-input pl-10 text-sm py-2 bg-neutral-50 border-neutral-200 focus:bg-white"
+            className="form-input pl-10 text-xs py-2 bg-neutral-50 border-neutral-200 focus:bg-white"
             placeholder="Search by Client Name, ID (CLIENT-XXXX), Email, or Mobile..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2 text-xs text-neutral-500 font-semibold px-2">
-          <span>{clients.length} Registered Client{clients.length === 1 ? '' : 's'}</span>
+          <span>{clients.length} Client{clients.length === 1 ? '' : 's'}</span>
         </div>
       </div>
 
-      {/* Clients Table */}
+      {/* ─── Clients Table ─────────────────────────────────────────────────── */}
       <div className="glass-card overflow-hidden bg-white border border-neutral-200 shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-neutral-800">
+          <table className="w-full text-left text-xs text-neutral-800">
             <thead className="bg-neutral-100 text-[0.7rem] uppercase tracking-wider text-neutral-600 font-bold border-b border-neutral-200">
               <tr>
                 <th className="p-4">Client ID</th>
@@ -185,8 +174,8 @@ export default function AdminClientsPage() {
                       </div>
                     </td>
                     <td className="p-4 text-xs">
-                      <div className="text-neutral-700 font-medium">{c.email}</div>
-                      <div className="text-neutral-500 font-mono text-[0.7rem] mt-0.5">{c.mobile}</div>
+                      <div className="text-neutral-800 font-medium">{c.email}</div>
+                      <div className="text-neutral-500 font-mono text-[0.7rem] mt-0.5">{c.mobile || '—'}</div>
                     </td>
                     <td className="p-4 text-xs text-neutral-600">
                       {c.city ? `${c.city}, ${c.state || ''}` : '—'}
@@ -198,39 +187,26 @@ export default function AdminClientsPage() {
                     </td>
                     <td className="p-4">
                       <span
-                        className={`status-badge ${
-                          c.isActive ? 'status-won' : 'status-pending'
+                        className={`inline-flex items-center px-2 py-0.5 rounded text-[0.65rem] font-bold uppercase tracking-wider ${
+                          c.isActive
+                            ? 'bg-black text-white'
+                            : 'bg-neutral-100 text-neutral-500 border border-neutral-300'
                         }`}
                       >
-                        {c.isActive ? 'Active' : 'Disabled'}
+                        {c.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      <Link
-                        href={`/admin/clients/${c.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-black bg-neutral-100 hover:bg-black hover:text-white px-3 py-1.5 rounded transition-all border border-neutral-300 hover:border-black"
-                      >
-                        Open Portal Hub →
-                      </Link>
+                      <span className="inline-flex items-center gap-1 font-bold text-black group-hover:underline text-xs">
+                        Open Workspace →
+                      </span>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td colSpan={7} className="p-12 text-center text-neutral-500 text-xs">
-                    {loading ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="w-6 h-6 border-2 border-neutral-400 border-t-black rounded-full animate-spin" />
-                        <span>Loading registered clients...</span>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="text-3xl">👥</div>
-                        <div className="font-semibold text-neutral-700">No clients found matching your query.</div>
-                        <p className="text-neutral-400">Click &ldquo;+ Register New Client&rdquo; to onboard a client.</p>
-                      </div>
-                    )}
+                    {loading ? 'Loading clients from database...' : 'No clients found matching query.'}
                   </td>
                 </tr>
               )}
@@ -239,37 +215,37 @@ export default function AdminClientsPage() {
         </div>
       </div>
 
-      {/* Registration Modal */}
+      {/* ─── Modal: Register New Client ─────────────────────────────────────── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="glass-card bg-white p-8 w-full max-w-xl space-y-5 border border-black shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
+          <div className="glass-card bg-white p-8 w-full max-w-lg space-y-4 border border-black shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
               <div>
                 <h2 className="font-serif text-xl font-bold text-black">Register New Client</h2>
-                <p className="text-xs text-neutral-500">Create client record and generate portal login credentials</p>
+                <p className="text-xs text-neutral-500">Auto-generates secure Client ID and login credentials</p>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="w-8 h-8 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:text-black hover:bg-neutral-100"
+                className="w-7 h-7 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-500 hover:text-black"
               >
                 ✕
               </button>
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded">
-                ⚠️ {error}
+              <div className="p-3 rounded text-xs text-red-700 bg-red-50 border border-red-200">
+                ⚠ {error}
               </div>
             )}
 
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
-                <label className="form-label text-xs">Full Legal Name *</label>
+                <label className="form-label text-xs">Full Name *</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Rajesh Kumar Sharma"
-                  className="form-input text-sm py-2"
+                  placeholder="e.g. Ramesh Chandra Senapati"
+                  className="form-input text-xs py-2"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 />
@@ -282,7 +258,7 @@ export default function AdminClientsPage() {
                     type="email"
                     required
                     placeholder="client@example.com"
-                    className="form-input text-sm py-2"
+                    className="form-input text-xs py-2"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
@@ -293,31 +269,20 @@ export default function AdminClientsPage() {
                     type="tel"
                     required
                     placeholder="+91 98765 43210"
-                    className="form-input text-sm py-2"
+                    className="form-input text-xs py-2 font-mono"
                     value={formData.mobile}
                     onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="form-label text-xs">Street Address</label>
-                <input
-                  type="text"
-                  placeholder="Plot/Flat No, Street, Landmark"
-                  className="form-input text-sm py-2"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="form-label text-xs">City</label>
                   <input
                     type="text"
-                    placeholder="Bhubaneswar"
-                    className="form-input text-sm py-2"
+                    placeholder="Cuttack / Bhubaneswar"
+                    className="form-input text-xs py-2"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   />
@@ -327,57 +292,25 @@ export default function AdminClientsPage() {
                   <input
                     type="text"
                     placeholder="Odisha"
-                    className="form-input text-sm py-2"
+                    className="form-input text-xs py-2"
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="form-label text-xs">PIN Code</label>
-                  <input
-                    type="text"
-                    placeholder="751001"
-                    className="form-input text-sm py-2"
-                    value={formData.pinCode}
-                    onChange={(e) => setFormData({ ...formData, pinCode: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-neutral-100">
-                <div>
-                  <label className="form-label text-xs">Emergency Contact Name</label>
-                  <input
-                    type="text"
-                    placeholder="Relation / Name"
-                    className="form-input text-sm py-2"
-                    value={formData.emergencyName}
-                    onChange={(e) => setFormData({ ...formData, emergencyName: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="form-label text-xs">Emergency Phone</label>
-                  <input
-                    type="tel"
-                    placeholder="+91 XXXXX XXXXX"
-                    className="form-input text-sm py-2"
-                    value={formData.emergencyPhone}
-                    onChange={(e) => setFormData({ ...formData, emergencyPhone: e.target.value })}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="form-label text-xs">Initial Temporary Password</label>
+                <label className="form-label text-xs">Initial Portal Password *</label>
                 <input
                   type="text"
-                  className="form-input text-sm py-2 font-mono bg-neutral-50"
+                  required
+                  className="form-input text-xs py-2 font-mono bg-neutral-50"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 />
-                <span className="text-[0.7rem] text-neutral-500 block mt-1">
-                  Client will be instructed to change password upon first sign in
-                </span>
+                <p className="text-[0.65rem] text-neutral-400 mt-1">
+                  Client can use this password alongside their Client ID to log into the Case Portal.
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-neutral-200">
@@ -393,7 +326,7 @@ export default function AdminClientsPage() {
                   disabled={submitting}
                   className="btn-primary text-xs py-2 px-5"
                 >
-                  {submitting ? 'Creating Client...' : 'Save & Open Client Hub'}
+                  {submitting ? 'Registering...' : 'Complete Registration'}
                 </button>
               </div>
             </form>

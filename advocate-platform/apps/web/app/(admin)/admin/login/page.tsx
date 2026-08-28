@@ -34,6 +34,7 @@ export default function AdminLoginPage() {
       if (data.data?.accessToken) {
         sessionStorage.setItem('admin_access_token', data.data.accessToken);
         sessionStorage.setItem('admin_user', JSON.stringify(data.data.user));
+        document.cookie = `admin_token=${data.data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
       }
 
       router.push('/admin/dashboard');

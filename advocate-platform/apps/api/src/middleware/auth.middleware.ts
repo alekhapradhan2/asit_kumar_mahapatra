@@ -24,13 +24,22 @@ export async function authenticate(
   next: NextFunction
 ): Promise<void> {
   try {
-    const authHeader = req.headers.authorization;
+    let token: string | undefined;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new AppError('No authentication token provided', 401);
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (req.query?.token && typeof req.query.token === 'string') {
+      token = req.query.token;
+    } else if (req.cookies?.admin_token) {
+      token = req.cookies.admin_token;
+    } else if (req.cookies?.client_token) {
+      token = req.cookies.client_token;
     }
 
-    const token = authHeader.split(' ')[1];
+    if (!token) {
+      throw new AppError('No authentication token provided', 401);
+    }
 
     let payload: AuthTokenPayload;
     try {

@@ -37,6 +37,7 @@ export default function ClientLoginPage() {
       if (data.data?.accessToken) {
         sessionStorage.setItem('client_access_token', data.data.accessToken);
         sessionStorage.setItem('client_user', JSON.stringify(data.data.user));
+        document.cookie = `client_token=${data.data.accessToken}; path=/; max-age=604800; SameSite=Lax`;
       }
 
       router.push('/client/dashboard');

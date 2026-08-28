@@ -10,15 +10,21 @@ const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Advocate Asit Kumar Mahap
 
 const practiceAreaMap: Record<string, {
   title: string;
-  icon: string;
   heroText: string;
+  badge: string;
+  iconSvg: React.ReactNode;
   sections: Array<{ heading: string; body: string }>;
   keyProcedures: string[];
 }> = {
   'criminal-law': {
     title: 'Criminal Law Defense & Litigation',
-    icon: '⚔️',
+    badge: 'BNSS / BNS / CrPC',
     heroText: 'Protecting your constitutional liberties and ensuring fair trial representation under the Bharatiya Nyaya Sanhita (BNS) / IPC and BNSS / CrPC.',
+    iconSvg: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+      </svg>
+    ),
     sections: [
       {
         heading: 'Bail & Personal Liberty Protection',
@@ -37,8 +43,13 @@ const practiceAreaMap: Record<string, {
   },
   'family-law': {
     title: 'Family, Matrimonial & Custody Law',
-    icon: '👨‍👩‍👧',
+    badge: 'Matrimonial & Custody',
     heroText: 'Empathetic counsel and resolute advocacy in matrimonial dissolution, child custody, and family property settlement.',
+    iconSvg: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    ),
     sections: [
       {
         heading: 'Divorce Proceedings & Mediation',
@@ -57,8 +68,13 @@ const practiceAreaMap: Record<string, {
   },
   'property-law': {
     title: 'Real Estate & Property Dispute Litigation',
-    icon: '🏠',
+    badge: 'Title & Encroachment',
     heroText: 'Protecting title, resolving builder disputes, and defending property ownership across all civil jurisdictions.',
+    iconSvg: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4" />
+      </svg>
+    ),
     sections: [
       {
         heading: 'Title & Possession Suits',
@@ -73,8 +89,13 @@ const practiceAreaMap: Record<string, {
   },
   'consumer-law': {
     title: 'Consumer Protection & Dispute Redressal',
-    icon: '🛒',
+    badge: 'CPA 2019 / NCDRC',
     heroText: 'Holding service providers, financial institutions, and developers accountable under the Consumer Protection Act, 2019.',
+    iconSvg: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+    ),
     sections: [
       {
         heading: 'Deficiency in Service Claims',
@@ -89,8 +110,13 @@ const practiceAreaMap: Record<string, {
   },
   'civil-law': {
     title: 'Civil Litigation & Contract Enforcement',
-    icon: '📜',
+    badge: 'Commercial & Recovery',
     heroText: 'Enforcing commercial contracts, recovering debts, and seeking declaratory and injunctive remedies in civil courts.',
+    iconSvg: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
     sections: [
       {
         heading: 'Summary Debt Recovery Suits',
@@ -105,8 +131,13 @@ const practiceAreaMap: Record<string, {
   },
   'cyber-law': {
     title: 'Cyber Crime Defense & Digital Privacy',
-    icon: '💻',
+    badge: 'IT Act & Sec 65B',
     heroText: 'Navigating digital evidence, cyber fraud, unauthorized data access, and Information Technology Act litigation.',
+    iconSvg: (
+      <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+      </svg>
+    ),
     sections: [
       {
         heading: 'Cyber Fraud Defense & Recovery',
@@ -141,68 +172,92 @@ export default async function PracticeAreaDetailPage({ params }: { params: Promi
       <BackgroundEffects />
       <div className="relative z-10 flex flex-col min-h-screen">
         <PublicNavbar />
+        
         <main className="flex-grow pt-28 pb-16">
-          <section className="container-xl py-12">
+          {/* Header */}
+          <section className="container-xl py-10 sm:py-14">
             <div className="max-w-4xl">
               <Link
                 href="/practice-areas"
-                className="text-xs text-black font-extrabold mb-6 inline-flex items-center gap-1.5 font-mono hover:underline"
+                className="text-xs text-neutral-600 hover:text-black font-semibold mb-6 inline-flex items-center gap-1.5 transition-colors"
               >
                 <span>←</span>
                 <span>Back to All Practice Jurisdictions</span>
               </Link>
 
-              <div className="w-16 h-16 rounded-xs bg-black text-white flex items-center justify-center text-4xl mb-6 shadow-[3px_3px_0px_rgba(0,0,0,0.2)]">
-                {area.icon}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-black text-white flex items-center justify-center shadow-md">
+                  {area.iconSvg}
+                </div>
+                <span className="text-xs font-bold font-mono uppercase tracking-wider px-3 py-1 bg-neutral-100 border border-neutral-200 rounded-full text-neutral-800">
+                  {area.badge}
+                </span>
               </div>
 
-              <h1 className="font-serif text-3xl sm:text-5xl font-bold text-black mb-6 leading-tight tracking-tight">
+              <h1 className="font-serif text-3xl sm:text-5xl font-bold text-black mb-4 leading-tight tracking-tight">
                 {area.title}
               </h1>
 
-              <p className="text-neutral-700 text-base sm:text-lg leading-relaxed mb-8 max-w-3xl">
+              <p className="text-neutral-700 text-sm sm:text-base leading-relaxed max-w-3xl">
                 {area.heroText}
               </p>
             </div>
           </section>
 
-          <section className="container-xl py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Details */}
+          <section className="container-xl pb-16">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              {/* Main Content Sections */}
               <div className="lg:col-span-8 space-y-6">
                 {area.sections.map((sec, i) => (
-                  <div key={i} className="court-card-stark p-8 rounded-xs bg-white">
-                    <h2 className="font-serif text-2xl font-bold text-black mb-3">
+                  <div key={i} className="p-7 sm:p-8 rounded-3xl bg-white/95 backdrop-blur-md border border-neutral-200 shadow-2xs hover:border-neutral-400 transition-colors">
+                    <h2 className="font-serif text-xl sm:text-2xl font-bold text-black mb-3">
                       {sec.heading}
                     </h2>
-                    <p className="text-neutral-700 text-sm sm:text-base leading-relaxed">
+                    <p className="text-neutral-700 text-sm leading-relaxed">
                       {sec.body}
                     </p>
                   </div>
                 ))}
               </div>
 
+              {/* Sidebar */}
               <div className="lg:col-span-4 space-y-6">
-                <div className="court-card-stark p-6 rounded-xs bg-white">
-                  <h3 className="font-serif text-lg font-bold text-black mb-4 flex items-center gap-2">
-                    <span>📋</span>
-                    <span>Key Legal Procedures</span>
+                <div className="p-6 rounded-3xl bg-white/95 backdrop-blur-md border border-neutral-200 shadow-2xs">
+                  <h3 className="font-serif text-base font-bold text-black mb-4 flex items-center gap-2">
+                    <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <span>Key Court Procedures</span>
                   </h3>
-                  <ul className="space-y-3">
+                  <ul className="space-y-2.5">
                     {area.keyProcedures.map((proc, i) => (
-                      <li key={i} className="text-xs sm:text-sm text-neutral-700 flex items-start gap-2.5 leading-relaxed">
-                        <span className="text-black font-bold mt-0.5">•</span>
+                      <li key={i} className="text-xs text-neutral-700 flex items-start gap-2.5 leading-relaxed">
+                        <svg className="w-3.5 h-3.5 text-black shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
                         <span>{proc}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="court-card-stark p-6 rounded-xs bg-neutral-50 text-center">
-                  <div className="text-3xl mb-3">⚖️</div>
-                  <h3 className="font-serif text-base font-bold text-black mb-2">Need Representation on this Matter?</h3>
-                  <p className="text-xs text-neutral-600 mb-6">Schedule a confidential case review with Advocate Asit Kumar Mahapatra.</p>
-                  <Link href="/contact" className="btn-primary text-xs justify-center w-full py-3.5 shadow-[3px_3px_0px_#000000]">
-                    Request Consultation
+                <div className="p-6 rounded-3xl bg-neutral-900 text-white text-center border border-neutral-800 shadow-md">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center mx-auto mb-3 text-white">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 3v18M4 7h16M4 7l3 7h-6l3-7M20 7l3 7h-6l3-7M9 21h6" />
+                    </svg>
+                  </div>
+                  <h3 className="font-serif text-base font-bold text-white mb-2">Need Representation on this Matter?</h3>
+                  <p className="text-xs text-neutral-400 mb-6 leading-relaxed">Schedule a confidential case review with Advocate Asit Kumar Mahapatra.</p>
+                  <Link
+                    href={`/contact?area=${slug}`}
+                    className="inline-flex items-center justify-center gap-2 py-3 px-6 bg-white text-black font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-neutral-200 transition-all w-full"
+                  >
+                    <span>Request Consultation</span>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
                   </Link>
                 </div>
               </div>
@@ -211,6 +266,7 @@ export default async function PracticeAreaDetailPage({ params }: { params: Promi
 
           <ContactCTA />
         </main>
+
         <PublicFooter />
       </div>
     </>

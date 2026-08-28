@@ -1,17 +1,17 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 
 export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
   const [settings, setSettings] = useState({
-    siteName: process.env.NEXT_PUBLIC_SITE_NAME || '[FIRM_NAME]',
-    tagline: 'Expert Legal Counsel You Can Trust',
-    contactEmail: 'contact@example.com',
-    contactPhone: '+91 XXXXX XXXXX',
-    officeAddress: '[Office Address], [City], [State] - [PIN]',
-    workingHours: 'Mon–Sat: 10:00 AM – 6:00 PM',
-    primaryColor: '#1a365d',
+    siteName: process.env.NEXT_PUBLIC_SITE_NAME || 'Advocate Asit Kumar Mahapatra',
+    tagline: 'High Court & District Court Legal Practice',
+    contactEmail: process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'advocate.asitmahapatra@gmail.com',
+    contactPhone: process.env.NEXT_PUBLIC_CONTACT_PHONE || '+91 98610 00000',
+    officeAddress: process.env.NEXT_PUBLIC_OFFICE_ADDRESS || 'High Court Bar Association & Chamber Complex, Cuttack / Bhubaneswar, Odisha',
+    workingHours: 'Mon–Sat: 10:00 AM – 7:00 PM',
+    primaryColor: '#000000',
   });
 
   const handleSave = (e: React.FormEvent) => {
@@ -21,23 +21,32 @@ export default function AdminSettingsPage() {
   };
 
   return (
-    <div className="p-8 space-y-6 max-w-4xl">
-      <div>
-        <Link href="/admin/dashboard" className="text-xs text-yellow-400 hover:text-yellow-300 font-medium mb-1 inline-block">
-          ← Back to Dashboard
-        </Link>
-        <h1 className="font-serif text-2xl font-bold text-white">White-Label & Site Settings</h1>
-        <p className="text-xs text-slate-400">Configure firm name, contact details, address, and branding dynamically</p>
+    <div className="min-h-screen bg-neutral-50 p-8 space-y-6 max-w-4xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-neutral-200 pb-6">
+        <div>
+          <Link href="/admin/dashboard" className="text-xs uppercase tracking-widest text-neutral-500 hover:text-black font-bold mb-2 inline-flex items-center gap-1.5 transition-colors">
+            ← Back to Dashboard
+          </Link>
+          <div className="flex items-center gap-3 mt-1">
+            <div className="w-9 h-9 rounded-sm bg-black text-white flex items-center justify-center font-bold text-sm">
+              ⚙️
+            </div>
+            <div>
+              <h1 className="font-serif text-2xl font-bold text-black">Firm & Portal Settings</h1>
+              <p className="text-xs text-neutral-500">Configure firm name, contact details, address, and branding dynamically</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {saved && (
-        <div className="p-4 rounded-lg text-sm text-emerald-400 border border-emerald-400/30 bg-emerald-400/10">
+        <div className="p-3 px-4 rounded text-xs font-semibold text-black bg-neutral-100 border border-neutral-300">
           ✓ Settings saved successfully!
         </div>
       )}
 
-      <form onSubmit={handleSave} className="glass-card p-8 space-y-6">
-        <h2 className="font-serif text-lg font-bold text-white border-b border-white/8 pb-3">Branding & Identity</h2>
+      <form onSubmit={handleSave} className="glass-card p-8 space-y-6 bg-white border border-neutral-200 shadow-sm">
+        <h2 className="font-serif text-lg font-bold text-black border-b border-neutral-100 pb-3">Branding & Identity</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
@@ -70,7 +79,7 @@ export default function AdminSettingsPage() {
           />
         </div>
 
-        <h2 className="font-serif text-lg font-bold text-white border-b border-white/8 pb-3 pt-4">Contact Information</h2>
+        <h2 className="font-serif text-lg font-bold text-black border-b border-neutral-100 pb-3 pt-4">Contact Information</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
@@ -103,8 +112,8 @@ export default function AdminSettingsPage() {
           />
         </div>
 
-        <div className="flex justify-end pt-4 border-t border-white/8">
-          <button type="submit" className="btn-primary text-sm py-2.5 px-6">
+        <div className="flex justify-end pt-4 border-t border-neutral-200">
+          <button type="submit" className="btn-primary text-xs uppercase tracking-wider py-2.5 px-6">
             Save Settings
           </button>
         </div>
